@@ -75,8 +75,6 @@ export class CityBuilderState extends State {
                 frameTime: 0,
                 repeat: true
             });
-            // unit.width = 75;
-            // unit.height = 75;
             unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
             this.resources.push(unit.add(Selectable));
         }
@@ -91,6 +89,9 @@ export class CityBuilderState extends State {
             frameTime: 0,
             repeat: true
         });
+        townCenter.add(Selectable)
+        townCenter.position.x = 128 * 10;
+        townCenter.position.y = 148 * 3 / 4 * 6;
 
         const camera = new Entity(this);
         this.camera = camera.add(Camera);
@@ -125,7 +126,6 @@ export class CityBuilderState extends State {
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
-        pos.add(this.camera.entity.position);
         this.dragStartPoint = pos;
 
         if (!shiftKey) {
@@ -134,7 +134,6 @@ export class CityBuilderState extends State {
     }
 
     dragend_0(pos: Point) {
-        pos.add(this.camera.entity.position);
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
             const { x: x2, y: y2 } = pos;
@@ -163,7 +162,7 @@ export class CityBuilderState extends State {
 
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse.copy().add(this.camera.entity.position);
+            const { x: x2, y: y2 } = this.game.mouse;
 
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
@@ -181,14 +180,12 @@ export class CityBuilderState extends State {
     }
 
     render(context: CanvasRenderingContext2D) {
-        context.translate(-this.camera.entity.position.x, -this.camera.entity.position.y);
-
         super.render(context);
 
         // Cool lil unit selector
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse.copy().add(this.camera.entity.position);
+            const { x: x2, y: y2 } = this.game.mouse;
 
             context.fillStyle = 'rgba(177, 177, 177, 0.25)'
             context.fillRect(x1, y1, x2 - x1, y2 - y1);

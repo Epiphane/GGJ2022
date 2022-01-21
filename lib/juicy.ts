@@ -41,7 +41,7 @@ class Game {
     private scale = new Point(1);
     mouse = new Point();
     private running: boolean = false;
-    private state!: State;
+    private _state!: State;
     private lastTime: number = 0;
 
     // For going slow
@@ -83,7 +83,7 @@ class Game {
         }
         this.size = new Point(width, height);
         this.scale = new Point(scale || 1);
-        this.state = new State();
+        this._state = new State();
 
         let canv: HTMLCanvasElement;
         if (canvas instanceof HTMLCanvasElement) {
@@ -117,7 +117,7 @@ class Game {
             this.keyState[evt.keyCode] = true;
 
             const method = 'keyDown_' + this.CODES[evt.keyCode];
-            const state = this.state as any;
+            const state = this._state as any;
             if (state && state[method]) {
                 state[method](this.CODES[evt.keyCode]);
             }
@@ -129,7 +129,7 @@ class Game {
             this.trigger('keypress', evt);
 
             const method = 'key_' + this.CODES[evt.keyCode];
-            const state = this.state as any;
+            const state = this._state as any;
             if (state && state[method]) {
                 state[method](this.CODES[evt.keyCode]);
             }
@@ -227,7 +227,7 @@ class Game {
         const mx = (evt.clientX - canvasRect.left) * this.size.x / canvasRect.width;
         const my = (evt.clientY - canvasRect.top) * this.size.y / canvasRect.height;
 
-        return new Point(mx, my);
+        return new Point(mx, my).add(this.state.cameraOffset);
     }
 
     resize() {
@@ -247,8 +247,8 @@ class Game {
         // }
 
         // Make sure we re-render
-        if (this.state) {
-            this.state.hasRendered = false;
+        if (this._state) {
+            this._state.hasRendered = false;
         }
 
         return this; // Enable chaining
@@ -268,7 +268,7 @@ class Game {
     }
 
     trigger(evt: string, ...data: any) {
-        const state = this.state as any;
+        const state = this._state as any;
         if (state && state[evt]) {
             state[evt](...data);
         }
@@ -290,7 +290,7 @@ class Game {
             for (let i = 0; i < keys.length; i++) {
                 const key = keys[i];
 
-                (this.state as any)['key_' + key] = callback;
+                (this._state as any)['key_' + key] = callback;
             }
         }
         else {
@@ -306,17 +306,17 @@ class Game {
         return this; // Enable chaining
     };
 
-    getState() {
-        return this.state;
+    get state() {
+        return this._state;
     }
 
     setState(state: State) {
         this.clear();
 
-        this.state = state;
-        this.state.game = this;
-        this.state.init();
-        this.state.hasRendered = false;
+        this._state = state;
+        this._state.game = this;
+        this._state.init();
+        this._state.hasRendered = false;
 
         return this; // Enable chaining
     }
@@ -347,14 +347,14 @@ class Game {
 
         try {
             this.time += dt;
-            const updated = !this.state.update(dt) || this.state.updated;
-            this.state.updated = false;
+            const updated = !this._state.update(dt) || this._state.updated;
+            this._state.updated = false;
 
             this.lastTime = nextTime;
 
-            if (updated || !this.state.hasRendered) {
+            if (updated || !this._state.hasRendered) {
                 this.render();
-                this.state.hasRendered = true;
+                this._state.hasRendered = true;
             }
         }
         catch (e) {
@@ -371,12 +371,14 @@ class Game {
         }
 
         context.save();
-        if (!this.state.stopClear) {
-            context.fillStyle = this.state.clearColor ?? this.clearColor;
+        if (!this._state.stopClear) {
+            context.fillStyle = this._state.clearColor ?? this.clearColor;
             context.fillRect(0, 0, this.size.x, this.size.y);
         }
+        context.translate(-this.state.cameraOffset.x, -this.state.cameraOffset.y);
+        context.scale(this.state.zoom, this.state.zoom);
 
-        this.state.render(context);
+        this._state.render(context);
         context.restore();
 
         this.afterRenderCallbacks.forEach(callback => callback(canvas));
@@ -433,6 +435,9 @@ export class State {
     updated: boolean = false;
     stopClear: boolean = false;
     clearColor?: FillStyle;
+
+    zoom = 1;
+    cameraOffset = new Point();
 
     game: Game = game;
     entities: Entity[] = [];
