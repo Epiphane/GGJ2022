@@ -4,6 +4,7 @@ import {
     State,
     TextComponent,
 } from "../../lib/juicy";
+import { CityBuilderState } from "./city-builder";
 
 export class LoadingScreen extends State {
     constructor() {
@@ -23,6 +24,8 @@ export class LoadingScreen extends State {
 
     update(dt: number) {
         super.update(dt);
+
+        this.game.setState(new CityBuilderState());
     }
 
     render(context: CanvasRenderingContext2D) {

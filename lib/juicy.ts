@@ -166,45 +166,52 @@ class Game {
         canvas.style.height = `${this.scale.y * this.size.y}px`;
         SetCanvasSize(this.canvas, this.size.x, this.size.y);
 
-        let startDrag: MouseEvent | undefined;
-        let dragging = false;
+        let startDrag: (MouseEvent | undefined)[] = [];
+        let dragging: boolean[] = [];
         canvas.onmousedown = (evt: MouseEvent) => {
             this.triggerAtPos('mousedown', evt);
-            if (!startDrag) {
-                startDrag = evt;
+
+            if (!startDrag[evt.button]) {
+                startDrag[evt.button] = evt;
             }
         };
         canvas.onmouseup = (evt: MouseEvent) => {
-            this.triggerAtPos('mouseup', evt);
-            if (!startDrag) {
+            this.triggerAtPos(`mouseup`, evt);
+
+            if (!startDrag[evt.button]) {
                 return;
             }
 
-            if (!dragging) {
+            if (!dragging[evt.button]) {
                 this.triggerAtPos('click', evt);
             }
             else {
                 this.triggerAtPos('dragend', evt);
             }
 
-            startDrag = undefined;
-            dragging = false;
+            startDrag[evt.button] = undefined;
+            dragging[evt.button] = false;
         };
         canvas.onmousemove = (evt: MouseEvent) => {
             this.triggerAtPos('mousemove', evt);
             this.mouse = this.getCanvasCoords(evt);
 
-            if (dragging) {
-                this.triggerAtPos('drag', evt);
-            }
-            else if (startDrag) {
-                var startPos = this.getCanvasCoords(startDrag);
-                var endPos = this.getCanvasCoords(evt);
-                if (startPos.sub(endPos).length() >= 5) {
-                    this.triggerAtPos('dragstart', startDrag);
-                    dragging = true;
+            startDrag.forEach((start, button) => {
+                if (dragging[button]) {
+                    this.triggerAtPos('drag', evt);
                 }
-            }
+                else if (start) {
+                    var startPos = this.getCanvasCoords(start);
+                    var endPos = this.getCanvasCoords(evt);
+                    if (startPos.sub(endPos).length() >= 5) {
+                        this.triggerAtPos('dragstart', start);
+                        dragging[button] = true;
+                    }
+                }
+            });
+        }
+        canvas.oncontextmenu = (evt: MouseEvent) => {
+            evt.preventDefault();
         }
 
         this.resize();
@@ -217,8 +224,8 @@ class Game {
         }
 
         const canvasRect = this.canvas.getBoundingClientRect();
-        const mx = evt.clientX - canvasRect.left;
-        const my = evt.clientY - canvasRect.top;
+        const mx = (evt.clientX - canvasRect.left) * this.size.x / canvasRect.width;
+        const my = (evt.clientY - canvasRect.top) * this.size.y / canvasRect.height;
 
         return new Point(mx, my);
     }
@@ -267,8 +274,11 @@ class Game {
         }
     }
 
-    triggerAtPos(evt: string, pos: MouseEvent) {
-        this.trigger(evt, this.getCanvasCoords(pos));
+    triggerAtPos(name: string, evt: MouseEvent) {
+        this.trigger(`${name}_${evt.button}`, this.getCanvasCoords(evt));
+        if (evt.button === 0) {
+            this.trigger(name, this.getCanvasCoords(evt));
+        }
     }
 
     on(action: string, keys: string | string[], callback?: EventListener) {
@@ -800,16 +810,32 @@ export class ImageComponent extends Component {
     }
 }
 
+export interface BoxInfo {
+    fillStyle: FillStyle;
+    lineWidth: number;
+    strokeStyle: FillStyle;
+}
+
+export interface BoxComponent extends BoxInfo { }
 export class BoxComponent extends Component {
     fillStyle: FillStyle = 'white';
+    lineWidth: number = 0;
+    strokeStyle: FillStyle = 'white';
 
-    setFillStyle(style: FillStyle) {
-        this.fillStyle = style;
+    set(config: Partial<BoxInfo>) {
+        Object.assign(this, config);
+        return this;
     }
 
     render(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
         context.fillStyle = this.fillStyle;
         context.fillRect(x, y, w, h);
+
+        if (this.lineWidth !== 0) {
+            context.lineWidth = this.lineWidth;
+            context.strokeStyle = this.strokeStyle;
+            context.strokeRect(x, y, w, h);
+        }
     }
 }
 
