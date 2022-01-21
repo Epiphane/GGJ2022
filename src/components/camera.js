@@ -27,7 +27,7 @@ define(["require", "exports", "../../lib/juicy"], function (require, exports, ju
             if (!this.target) {
                 return this.entity.position.copy();
             }
-            const pos = new juicy_1.Point(this.target.position.x + this.target.width / 2 - juicy_1.Game.size.x / 2, this.target.position.y - juicy_1.Game.size.y / 2);
+            const pos = new juicy_1.Point(this.target.position.x + this.target.width / 2, this.target.position.y + this.target.height / 2);
             return pos;
         }
         snapCamera() {

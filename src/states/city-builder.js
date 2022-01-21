@@ -67,11 +67,11 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 repeat: true
             });
             townCenter.add(selectable_1.Selectable);
-            townCenter.position.x = 128 * 10;
-            townCenter.position.y = 148 * 3 / 4 * 6;
+            townCenter.position.x = 128 * 1;
+            // townCenter.position.y = 148 * 3 / 4 * 6;
             const camera = new juicy_1.Entity(this);
-            this.camera = camera.add(camera_1.Camera);
-            this.camera.target = townCenter;
+            camera.add(camera_1.Camera).target = townCenter;
+            this.zoom = 1.5;
         }
         click_0(_, { shiftKey }) {
             this.units.forEach(selectable => {
