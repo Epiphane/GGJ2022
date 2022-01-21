@@ -1,4 +1,4 @@
-define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1, dialog_box_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
@@ -8,6 +8,9 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.hexes = [];
             this.units = [];
             this.resources = [];
+            this.worldMouse = new juicy_1.Point();
+            this.zoom = 1.5;
+            this.dialogBox = new dialog_box_1.DialogBox(this);
             this.clearColor = '#449944';
             // Using 'odd-r' Offset Coordinate system.
             // E.g. First (0th) row of hexes are aligned edge to edge horizontally
@@ -74,9 +77,21 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 repeat: true
             });
             townCenter.add(selectable_1.Selectable);
-            const camera = new juicy_1.Entity(this);
-            camera.add(camera_1.Camera).target = townCenter;
-            this.zoom = 1.5;
+            this.camera = new juicy_1.Entity(this);
+            this.camera.add(camera_1.Camera).target = townCenter;
+            this.dialogBox.position.x = 100;
+            this.dialogBox.position.y = 100;
+            this.dialogBox.width = 600;
+            this.dialogBox.height = 800;
+            this.dialogBox.setInfo('Test title');
+            this.remove(this.dialogBox);
+        }
+        toWorldPos(pos) {
+            const result = pos.copy();
+            result.add(this.game.size.copy().mult(-0.5));
+            result.mult(1 / this.zoom);
+            result.add(this.camera.position);
+            return result;
         }
         mousewheel({ deltaY }) {
             this.zoom -= deltaY / 500;
@@ -96,6 +111,11 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                     selectable.deselect();
                 }
             });
+            const selected = this.entities.filter(entity => {
+                const selectable = entity.get(selectable_1.Selectable);
+                return selectable && (selectable.selected);
+            });
+            this.dialogBox.setInfo(`${selected.length} selected`);
         }
         mouseup_2() {
             const selected = this.units.filter(s => s.selected);
@@ -108,7 +128,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             }
         }
         dragstart_0(pos, { shiftKey }) {
-            this.dragStartPoint = pos;
+            this.dragStartPoint = this.toWorldPos(pos);
             if (!shiftKey) {
                 this.units.forEach(selectable => selectable.deselect());
             }
@@ -116,7 +136,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
         dragend_0(pos) {
             if (this.dragStartPoint) {
                 const { x: x1, y: y1 } = this.dragStartPoint;
-                const { x: x2, y: y2 } = pos;
+                const { x: x2, y: y2 } = this.toWorldPos(pos);
                 const minX = Math.min(x1, x2);
                 const maxX = Math.max(x1, x2);
                 const minY = Math.min(y1, y2);
@@ -136,9 +156,16 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
         }
         update(dt) {
             super.update(dt);
+            const worldMouse = this.toWorldPos(this.game.mouse);
+            this.entities.forEach(entity => {
+                const selectable = entity.get(selectable_1.Selectable);
+                if (selectable) {
+                    selectable.hovering = entity.contains(worldMouse);
+                }
+            });
             if (this.dragStartPoint) {
                 const { x: x1, y: y1 } = this.dragStartPoint;
-                const { x: x2, y: y2 } = this.game.mouse;
+                const { x: x2, y: y2 } = worldMouse;
                 const minX = Math.min(x1, x2);
                 const maxX = Math.max(x1, x2);
                 const minY = Math.min(y1, y2);
@@ -153,17 +180,23 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             }
         }
         render(context) {
+            context.save();
+            context.translate(this.game.size.x / 2, this.game.size.y / 2);
+            context.scale(this.zoom, this.zoom);
+            context.translate(-this.camera.position.x, -this.camera.position.y);
             super.render(context);
             // Cool lil unit selector
             if (this.dragStartPoint) {
                 const { x: x1, y: y1 } = this.dragStartPoint;
-                const { x: x2, y: y2 } = this.game.mouse;
+                const { x: x2, y: y2 } = this.toWorldPos(this.game.mouse);
                 context.fillStyle = 'rgba(177, 177, 177, 0.25)';
                 context.fillRect(x1, y1, x2 - x1, y2 - y1);
                 context.strokeStyle = 'rgba(61, 61, 61, 1)';
                 context.lineWidth = 5;
                 context.strokeRect(x1, y1, x2 - x1, y2 - y1);
             }
+            context.restore();
+            this.dialogBox.render(context);
         }
     }
     exports.CityBuilderState = CityBuilderState;

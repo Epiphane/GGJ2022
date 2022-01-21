@@ -9,9 +9,9 @@ define(["require", "exports", "../../lib/juicy"], function (require, exports, ju
             this.hovering = false;
             this.selected = false;
         }
-        update(dt, game) {
-            this.hovering = this.entity.contains(game.mouse);
-        }
+        // update(dt: number, game: typeof Game) {
+        //     this.hovering = this.entity.contains(game.mouse);
+        // }
         select() {
             this.selected = true;
         }

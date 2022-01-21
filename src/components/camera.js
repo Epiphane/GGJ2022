@@ -43,7 +43,6 @@ define(["require", "exports", "../../lib/juicy"], function (require, exports, ju
             let moveX = dx * 0.05;
             let moveY = dy * 0.05;
             this.entity.position.add(moveX, moveY);
-            this.entity.state.cameraOffset = this.entity.position;
         }
     }
     exports.Camera = Camera;
