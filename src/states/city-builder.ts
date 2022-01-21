@@ -15,6 +15,7 @@ export class CityBuilderState extends State {
 
     hexes: Entity[] = [];
     units: Selectable[] = [];
+    resources: Selectable[] = [];
 
     constructor() {
         super();
@@ -59,6 +60,17 @@ export class CityBuilderState extends State {
             unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
             this.units.push(unit.add(Selectable));
         }
+
+        for (let i = 0; i < 10; i++) {
+            const unit = new Entity(this);
+            unit.add(BoxComponent).set({
+                fillStyle: '#C33',
+            });
+            unit.width = 75;
+            unit.height = 75;
+            unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+            this.resources.push(unit.add(Selectable));
+        }
     }
 
     click_0(_: Point, { shiftKey }: MouseEvent) {
@@ -82,34 +94,12 @@ export class CityBuilderState extends State {
         console.log(`Moving ${selected.length} units`);
     }
 
-    dragstart_0(pos: Point) {
+    dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
         this.dragStartPoint = pos;
-    }
 
-    drag_0(pos: Point) {
-        // if (!this.dragStartPoint) {
-        //     return;
-        // }
-
-        // const { x: x1, y: y1 } = this.dragStartPoint;
-        // const { x: x2, y: y2 } = pos;
-
-        // const minX = Math.min(x1, x2);
-        // const maxX = Math.max(x1, x2);
-        // const minY = Math.min(y1, y2);
-        // const maxY = Math.max(y1, y2);
-
-        // this.selected = this.units.filter(selectable => {
-        //     const unit = selectable.entity;
-        //     return unit.position.x >= minX &&
-        //         unit.position.y >= minY &&
-        //         unit.position.x + unit.width <= maxX &&
-        //         unit.position.y + unit.height <= maxY;
-        // });
-
-        // this.selected.forEach(selectable => {
-        //     selectable.select();
-        // });
+        if (!shiftKey) {
+            this.units.forEach(selectable => selectable.deselect());
+        }
     }
 
     dragend_0(pos: Point) {
