@@ -7,6 +7,7 @@ import {
     State,
     TextComponent,
 } from "../../lib/juicy";
+import { Camera } from "../components/camera";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
 
@@ -16,6 +17,8 @@ export class CityBuilderState extends State {
     hexes: Entity[] = [];
     units: Selectable[] = [];
     resources: Selectable[] = [];
+
+    camera: Camera;
 
     constructor() {
         super();
@@ -63,14 +66,35 @@ export class CityBuilderState extends State {
 
         for (let i = 0; i < 10; i++) {
             const unit = new Entity(this);
-            unit.add(BoxComponent).set({
-                fillStyle: '#C33',
+            const sprite = unit.add(SpriteComponent);
+            sprite.setImage('./img/hex_128x148_forest.png');
+            sprite.setSize(128, 148);
+            sprite.runAnimation({
+                name: "deselect",
+                sheet: [0],
+                frameTime: 0,
+                repeat: true
             });
-            unit.width = 75;
-            unit.height = 75;
+            // unit.width = 75;
+            // unit.height = 75;
             unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
             this.resources.push(unit.add(Selectable));
         }
+
+        const townCenter = new Entity(this);
+        const sprite = townCenter.add(SpriteComponent);
+        sprite.setImage('./img/town_center.png');
+        sprite.setSize(128, 148);
+        sprite.runAnimation({
+            name: "base",
+            sheet: [0],
+            frameTime: 0,
+            repeat: true
+        });
+
+        const camera = new Entity(this);
+        this.camera = camera.add(Camera);
+        this.camera.target = townCenter;
     }
 
     click_0(_: Point, { shiftKey }: MouseEvent) {
@@ -91,10 +115,17 @@ export class CityBuilderState extends State {
 
     mouseup_2() {
         const selected = this.units.filter(s => s.selected);
-        console.log(`Moving ${selected.length} units`);
+        const resource = this.resources.find(s => s.hovering);
+        if (resource) {
+            console.log(`Moving ${selected.length} units to a resource`);
+        }
+        else {
+            console.log(`Moving ${selected.length} units`);
+        }
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
+        pos.add(this.camera.entity.position);
         this.dragStartPoint = pos;
 
         if (!shiftKey) {
@@ -103,6 +134,7 @@ export class CityBuilderState extends State {
     }
 
     dragend_0(pos: Point) {
+        pos.add(this.camera.entity.position);
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
             const { x: x2, y: y2 } = pos;
@@ -131,7 +163,7 @@ export class CityBuilderState extends State {
 
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse;
+            const { x: x2, y: y2 } = this.game.mouse.copy().add(this.camera.entity.position);
 
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
@@ -149,12 +181,14 @@ export class CityBuilderState extends State {
     }
 
     render(context: CanvasRenderingContext2D) {
+        context.translate(-this.camera.entity.position.x, -this.camera.entity.position.y);
+
         super.render(context);
 
         // Cool lil unit selector
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse;
+            const { x: x2, y: y2 } = this.game.mouse.copy().add(this.camera.entity.position);
 
             context.fillStyle = 'rgba(177, 177, 177, 0.25)'
             context.fillRect(x1, y1, x2 - x1, y2 - y1);
