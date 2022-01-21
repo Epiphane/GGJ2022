@@ -53,9 +53,22 @@ const server = http
       if (!err && stat.isDirectory()) {
         const subpath = path + "index.html";
         fs.stat(subpath, (err) => serveStatResult(res, subpath, err));
-      } else {
-        serveStatResult(res, path, err);
+        return;
       }
+      else if (!err) {
+        serveStatResult(res, path, err);
+        return;
+      }
+
+      const distPath = (basedir + '/dist' + req.url).replace("%20", " ");
+      fs.stat(distPath, (err, stat) => {
+        if (!err && stat.isDirectory()) {
+          const subpath = distPath + "index.html";
+          fs.stat(subpath, (err) => serveStatResult(res, subpath, err));
+        } else {
+          serveStatResult(res, distPath, err);
+        }
+      });
     });
   });
 
