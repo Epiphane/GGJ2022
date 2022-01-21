@@ -195,7 +195,6 @@ class Game {
         canvas.onmousemove = (evt: MouseEvent) => {
             this.triggerAtPos('mousemove', evt);
             this.mouse = this.getCanvasCoords(evt);
-            document.getElementById('debug')!.innerText = JSON.stringify(this.mouse);
 
             startDrag.forEach((start, button) => {
                 if (dragging[button]) {
