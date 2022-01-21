@@ -13,8 +13,8 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             // E.g. First (0th) row of hexes are aligned edge to edge horizontally
             // Then, odd (1,3,5,etc.) rows are offset by 1/2 the width. All rows offset by 3/4 height.
             // More on this system here: https://www.redblobgames.com/grids/hexagons/
-            for (let x = 0; x < 30; x++) {
-                for (let y = 0; y < 30; y++) {
+            for (let x = -15; x < 15; x++) {
+                for (let y = -15; y < 15; y++) {
                     const hex = new juicy_1.Entity(this);
                     const sprite = hex.add(sprite_1.SpriteComponent);
                     sprite.setSize(128, 148);
@@ -32,14 +32,14 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                     this.hexes.push(hex);
                 }
             }
-            for (let i = 0; i < 30; i++) {
+            for (let i = 0; i < 10; i++) {
                 const unit = new juicy_1.Entity(this);
                 unit.add(juicy_1.BoxComponent).set({
                     fillStyle: '#666',
                 });
                 unit.width = 50;
                 unit.height = 50;
-                unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+                unit.position = this.game.size.copy().mult(Math.random() - 0.5, Math.random() - 0.5).mult(1 / 3);
                 this.units.push(unit.add(selectable_1.Selectable));
             }
             for (let i = 0; i < 10; i++) {
@@ -54,6 +54,13 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                     repeat: true
                 });
                 unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+                unit.position.x = 128 * Math.floor(Math.random() * 20 - 10);
+                const y = Math.floor(Math.random() * 12 - 6);
+                unit.position.y = 148 * 3 / 4 * y;
+                if (y % 2 != 0) {
+                    unit.position.x += 128 / 2;
+                }
+                ;
                 this.resources.push(unit.add(selectable_1.Selectable));
             }
             const townCenter = new juicy_1.Entity(this);
@@ -67,11 +74,13 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 repeat: true
             });
             townCenter.add(selectable_1.Selectable);
-            townCenter.position.x = 128 * 1;
-            // townCenter.position.y = 148 * 3 / 4 * 6;
             const camera = new juicy_1.Entity(this);
             camera.add(camera_1.Camera).target = townCenter;
             this.zoom = 1.5;
+        }
+        mousewheel({ deltaY }) {
+            this.zoom -= deltaY / 500;
+            this.zoom = Math.min(Math.max(this.zoom, 1), 2.5);
         }
         click_0(_, { shiftKey }) {
             this.units.forEach(selectable => {
