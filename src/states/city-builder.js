@@ -1,4 +1,4 @@
-define(["require", "exports", "../../lib/juicy", "../components/sprite"], function (require, exports, juicy_1, sprite_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
@@ -7,7 +7,7 @@ define(["require", "exports", "../../lib/juicy", "../components/sprite"], functi
             super();
             this.hexes = [];
             this.units = [];
-            this.selected = [];
+            this.resources = [];
             this.clearColor = '#449944';
             // Using 'odd-r' Offset Coordinate system.
             // E.g. First (0th) row of hexes are aligned edge to edge horizontally
@@ -32,58 +32,116 @@ define(["require", "exports", "../../lib/juicy", "../components/sprite"], functi
                     this.hexes.push(hex);
                 }
             }
-            for (let i = 0; i < 20; i++) {
+            for (let i = 0; i < 30; i++) {
                 const unit = new juicy_1.Entity(this);
                 unit.add(juicy_1.BoxComponent).set({
                     fillStyle: '#666',
-                    strokeStyle: '#F33',
                 });
-                unit.width = 100;
-                unit.height = 100;
-                unit.position = this.game.size.copy().mult(Math.random(), Math.random());
-                this.units.push(unit);
+                unit.width = 50;
+                unit.height = 50;
+                unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+                this.units.push(unit.add(selectable_1.Selectable));
+            }
+            for (let i = 0; i < 10; i++) {
+                const unit = new juicy_1.Entity(this);
+                const sprite = unit.add(sprite_1.SpriteComponent);
+                sprite.setImage('./img/hex_128x148_forest.png');
+                sprite.setSize(128, 148);
+                sprite.runAnimation({
+                    name: "deselect",
+                    sheet: [0],
+                    frameTime: 0,
+                    repeat: true
+                });
+                unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+                this.resources.push(unit.add(selectable_1.Selectable));
+            }
+            const townCenter = new juicy_1.Entity(this);
+            const sprite = townCenter.add(sprite_1.SpriteComponent);
+            sprite.setImage('./img/town_center.png');
+            sprite.setSize(128, 148);
+            sprite.runAnimation({
+                name: "base",
+                sheet: [0],
+                frameTime: 0,
+                repeat: true
+            });
+            townCenter.add(selectable_1.Selectable);
+            townCenter.position.x = 128 * 10;
+            townCenter.position.y = 148 * 3 / 4 * 6;
+            const camera = new juicy_1.Entity(this);
+            this.camera = camera.add(camera_1.Camera);
+            this.camera.target = townCenter;
+        }
+        click_0(_, { shiftKey }) {
+            this.units.forEach(selectable => {
+                if (selectable.hovering) {
+                    if (shiftKey && selectable.selected) {
+                        selectable.deselect();
+                    }
+                    else {
+                        selectable.select();
+                    }
+                }
+                else if (!shiftKey) {
+                    selectable.deselect();
+                }
+            });
+        }
+        mouseup_2() {
+            const selected = this.units.filter(s => s.selected);
+            const resource = this.resources.find(s => s.hovering);
+            if (resource) {
+                console.log(`Moving ${selected.length} units to a resource`);
+            }
+            else {
+                console.log(`Moving ${selected.length} units`);
             }
         }
-        click_0() {
-            this.selected.forEach(unit => {
-                unit.get(juicy_1.BoxComponent).set({ lineWidth: 0 });
-            });
-            this.selected = [];
-        }
-        click_2() {
-            console.log(`Moving ${this.selected.length} units`);
-        }
-        dragstart_0(pos) {
+        dragstart_0(pos, { shiftKey }) {
             this.dragStartPoint = pos;
-        }
-        drag_0(pos) {
-            if (!this.dragStartPoint) {
-                return;
+            if (!shiftKey) {
+                this.units.forEach(selectable => selectable.deselect());
             }
-            const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = pos;
-            const minX = Math.min(x1, x2);
-            const maxX = Math.max(x1, x2);
-            const minY = Math.min(y1, y2);
-            const maxY = Math.max(y1, y2);
-            this.selected.forEach(unit => {
-                unit.get(juicy_1.BoxComponent).set({ lineWidth: 0 });
-            });
-            this.selected = this.units.filter(unit => {
-                return unit.position.x >= minX &&
-                    unit.position.y >= minY &&
-                    unit.position.x + unit.width <= maxX &&
-                    unit.position.y + unit.height <= maxY;
-            });
-            this.selected.forEach(unit => {
-                unit.get(juicy_1.BoxComponent).set({ lineWidth: 3 });
-            });
         }
         dragend_0(pos) {
+            if (this.dragStartPoint) {
+                const { x: x1, y: y1 } = this.dragStartPoint;
+                const { x: x2, y: y2 } = pos;
+                const minX = Math.min(x1, x2);
+                const maxX = Math.max(x1, x2);
+                const minY = Math.min(y1, y2);
+                const maxY = Math.max(y1, y2);
+                this.units.forEach(selectable => {
+                    const unit = selectable.entity;
+                    const hovering = unit.position.x >= minX &&
+                        unit.position.y >= minY &&
+                        unit.position.x + unit.width <= maxX &&
+                        unit.position.y + unit.height <= maxY;
+                    if (hovering) {
+                        selectable.select();
+                    }
+                });
+            }
             this.dragStartPoint = undefined;
         }
         update(dt) {
             super.update(dt);
+            if (this.dragStartPoint) {
+                const { x: x1, y: y1 } = this.dragStartPoint;
+                const { x: x2, y: y2 } = this.game.mouse;
+                const minX = Math.min(x1, x2);
+                const maxX = Math.max(x1, x2);
+                const minY = Math.min(y1, y2);
+                const maxY = Math.max(y1, y2);
+                this.units.forEach(selectable => {
+                    const unit = selectable.entity;
+                    selectable.hovering = unit.position.x >= minX &&
+                        unit.position.y >= minY &&
+                        unit.position.x + unit.width <= maxX &&
+                        unit.position.y + unit.height <= maxY;
+                });
+            }
         }
         render(context) {
             super.render(context);
