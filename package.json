@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "concurrently \"tsc -w\" \"nodemon index.js\"",
-    "build": "tsc && cp index.html dist"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
