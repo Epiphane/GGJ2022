@@ -1,13 +1,37 @@
-define(["require", "exports", "../../lib/juicy"], function (require, exports, juicy_1) {
+define(["require", "exports", "../../lib/juicy", "../components/sprite"], function (require, exports, juicy_1, sprite_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
     class CityBuilderState extends juicy_1.State {
         constructor() {
             super();
+            this.hexes = [];
             this.units = [];
             this.selected = [];
             this.clearColor = '#449944';
+            // Using 'odd-r' Offset Coordinate system.
+            // E.g. First (0th) row of hexes are aligned edge to edge horizontally
+            // Then, odd (1,3,5,etc.) rows are offset by 1/2 the width. All rows offset by 3/4 height.
+            // More on this system here: https://www.redblobgames.com/grids/hexagons/
+            for (let x = 0; x < 30; x++) {
+                for (let y = 0; y < 30; y++) {
+                    const hex = new juicy_1.Entity(this);
+                    const sprite = hex.add(sprite_1.SpriteComponent);
+                    sprite.setSize(128, 148);
+                    sprite.setImage('../../img/hex_128x148.png');
+                    sprite.setActive(true);
+                    hex.width = 128;
+                    hex.height = 148;
+                    var xOffset = x * hex.width;
+                    const yOffset = y * hex.height * (3 / 4);
+                    if (y % 2 != 0) {
+                        xOffset = x * hex.width - (hex.width / 2);
+                    }
+                    ;
+                    hex.position = new juicy_1.Point(xOffset, yOffset);
+                    this.hexes.push(hex);
+                }
+            }
             for (let i = 0; i < 20; i++) {
                 const unit = new juicy_1.Entity(this);
                 unit.add(juicy_1.BoxComponent).set({
