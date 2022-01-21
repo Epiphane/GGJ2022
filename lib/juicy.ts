@@ -117,7 +117,7 @@ class Game {
             this.keyState[evt.keyCode] = true;
 
             const method = 'keyDown_' + this.CODES[evt.keyCode];
-            const state = this._state as any;
+            const state = this.state as any;
             if (state && state[method]) {
                 state[method](this.CODES[evt.keyCode]);
             }
@@ -129,7 +129,7 @@ class Game {
             this.trigger('keypress', evt);
 
             const method = 'key_' + this.CODES[evt.keyCode];
-            const state = this._state as any;
+            const state = this.state as any;
             if (state && state[method]) {
                 state[method](this.CODES[evt.keyCode]);
             }
@@ -195,6 +195,7 @@ class Game {
         canvas.onmousemove = (evt: MouseEvent) => {
             this.triggerAtPos('mousemove', evt);
             this.mouse = this.getCanvasCoords(evt);
+            document.getElementById('debug')!.innerText = JSON.stringify(this.mouse);
 
             startDrag.forEach((start, button) => {
                 if (dragging[button]) {
@@ -224,10 +225,15 @@ class Game {
         }
 
         const canvasRect = this.canvas.getBoundingClientRect();
-        const mx = (evt.clientX - canvasRect.left) * this.size.x / canvasRect.width;
-        const my = (evt.clientY - canvasRect.top) * this.size.y / canvasRect.height;
+        let mx = (evt.clientX - canvasRect.left) / canvasRect.width;
+        let my = (evt.clientY - canvasRect.top) / canvasRect.height;
 
-        return new Point(mx, my).add(this.state.cameraOffset);
+        mx = (mx - 0.5) * this.size.x / this.state.zoom;
+        mx += this.state.cameraOffset.x;
+        my = (my - 0.5) * this.size.y / this.state.zoom;
+        my += this.state.cameraOffset.y;
+
+        return new Point(mx, my);
     }
 
     resize() {
@@ -247,8 +253,8 @@ class Game {
         // }
 
         // Make sure we re-render
-        if (this._state) {
-            this._state.hasRendered = false;
+        if (this.state) {
+            this.state.hasRendered = false;
         }
 
         return this; // Enable chaining
@@ -268,7 +274,7 @@ class Game {
     }
 
     trigger(evt: string, ...data: any) {
-        const state = this._state as any;
+        const state = this.state as any;
         if (state && state[evt]) {
             state[evt](...data);
         }
@@ -290,7 +296,7 @@ class Game {
             for (let i = 0; i < keys.length; i++) {
                 const key = keys[i];
 
-                (this._state as any)['key_' + key] = callback;
+                (this.state as any)['key_' + key] = callback;
             }
         }
         else {
@@ -314,9 +320,9 @@ class Game {
         this.clear();
 
         this._state = state;
-        this._state.game = this;
-        this._state.init();
-        this._state.hasRendered = false;
+        this.state.game = this;
+        this.state.init();
+        this.state.hasRendered = false;
 
         return this; // Enable chaining
     }
@@ -347,14 +353,14 @@ class Game {
 
         try {
             this.time += dt;
-            const updated = !this._state.update(dt) || this._state.updated;
-            this._state.updated = false;
+            const updated = !this.state.update(dt) || this.state.updated;
+            this.state.updated = false;
 
             this.lastTime = nextTime;
 
-            if (updated || !this._state.hasRendered) {
+            if (updated || !this.state.hasRendered) {
                 this.render();
-                this._state.hasRendered = true;
+                this.state.hasRendered = true;
             }
         }
         catch (e) {
@@ -371,14 +377,15 @@ class Game {
         }
 
         context.save();
-        if (!this._state.stopClear) {
-            context.fillStyle = this._state.clearColor ?? this.clearColor;
+        if (!this.state.stopClear) {
+            context.fillStyle = this.state.clearColor ?? this.clearColor;
             context.fillRect(0, 0, this.size.x, this.size.y);
         }
-        context.translate(-this.state.cameraOffset.x, -this.state.cameraOffset.y);
+        context.translate(this.size.x / 2, this.size.y / 2);
         context.scale(this.state.zoom, this.state.zoom);
+        context.translate(-this.state.cameraOffset.x, -this.state.cameraOffset.y);
 
-        this._state.render(context);
+        this.state.render(context);
         context.restore();
 
         this.afterRenderCallbacks.forEach(callback => callback(canvas));

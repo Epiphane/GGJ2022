@@ -18,8 +18,6 @@ export class CityBuilderState extends State {
     units: Selectable[] = [];
     resources: Selectable[] = [];
 
-    camera: Camera;
-
     constructor() {
         super();
 
@@ -90,13 +88,16 @@ export class CityBuilderState extends State {
             repeat: true
         });
         townCenter.add(Selectable)
-        townCenter.position.x = 128 * 10;
-        townCenter.position.y = 148 * 3 / 4 * 6;
+        townCenter.position.x = 128 * 1;
+        // townCenter.position.y = 148 * 3 / 4 * 6;
 
         const camera = new Entity(this);
-        this.camera = camera.add(Camera);
-        this.camera.target = townCenter;
+        camera.add(Camera).target = townCenter;
+
+        this.zoom = 1.5;
     }
+
+
 
     click_0(_: Point, { shiftKey }: MouseEvent) {
         this.units.forEach(selectable => {

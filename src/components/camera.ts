@@ -39,8 +39,8 @@ export class Camera extends Component {
         }
 
         const pos = new Point(
-            this.target.position.x + this.target.width / 2 - Game.size.x / 2,
-            this.target.position.y - Game.size.y / 2
+            this.target.position.x + this.target.width / 2,
+            this.target.position.y + this.target.height / 2
         );
         return pos;
     }
