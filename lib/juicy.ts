@@ -267,17 +267,17 @@ class Game {
         }
     }
 
-    trigger(evt: string, data: any) {
+    trigger(evt: string, ...data: any) {
         const state = this.state as any;
         if (state && state[evt]) {
-            state[evt](data);
+            state[evt](...data);
         }
     }
 
     triggerAtPos(name: string, evt: MouseEvent) {
-        this.trigger(`${name}_${evt.button}`, this.getCanvasCoords(evt));
+        this.trigger(`${name}_${evt.button}`, this.getCanvasCoords(evt), evt);
         if (evt.button === 0) {
-            this.trigger(name, this.getCanvasCoords(evt));
+            this.trigger(name, this.getCanvasCoords(evt), evt);
         }
     }
 
@@ -416,7 +416,7 @@ else {
 }
 export { game as Game };
 
-/* -------------------- Game State_ ----------------------- */
+/* -------------------- Game State ----------------------- */
 /*
  * new State_() - Construct new state
  *  [Constructor]

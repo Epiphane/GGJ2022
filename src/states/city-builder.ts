@@ -7,14 +7,14 @@ import {
     State,
     TextComponent,
 } from "../../lib/juicy";
+import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
 
 export class CityBuilderState extends State {
     dragStartPoint?: Point;
 
     hexes: Entity[] = [];
-    units: Entity[] = [];
-    selected: Entity[] = [];
+    units: Selectable[] = [];
 
     constructor() {
         super();
@@ -49,28 +49,37 @@ export class CityBuilderState extends State {
             }
         }
 
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 30; i++) {
             const unit = new Entity(this);
             unit.add(BoxComponent).set({
                 fillStyle: '#666',
-                strokeStyle: '#F33',
             });
-            unit.width = 100;
-            unit.height = 100;
-            unit.position = this.game.size.copy().mult(Math.random(), Math.random());
-            this.units.push(unit);
+            unit.width = 50;
+            unit.height = 50;
+            unit.position = this.game.size.copy().mult(Math.random() * 0.9, Math.random() * 0.9);
+            this.units.push(unit.add(Selectable));
         }
     }
 
-    click_0() {
-        this.selected.forEach(unit => {
-            unit.get(BoxComponent)!.set({ lineWidth: 0 });
+    click_0(_: Point, { shiftKey }: MouseEvent) {
+        this.units.forEach(selectable => {
+            if (selectable.hovering) {
+                if (shiftKey && selectable.selected) {
+                    selectable.deselect();
+                }
+                else {
+                    selectable.select();
+                }
+            }
+            else if (!shiftKey) {
+                selectable.deselect();
+            }
         });
-        this.selected = [];
     }
 
-    click_2() {
-        console.log(`Moving ${this.selected.length} units`);
+    mouseup_2() {
+        const selected = this.units.filter(s => s.selected);
+        console.log(`Moving ${selected.length} units`);
     }
 
     dragstart_0(pos: Point) {
@@ -78,39 +87,75 @@ export class CityBuilderState extends State {
     }
 
     drag_0(pos: Point) {
-        if (!this.dragStartPoint) {
-            return;
-        }
+        // if (!this.dragStartPoint) {
+        //     return;
+        // }
 
-        const { x: x1, y: y1 } = this.dragStartPoint;
-        const { x: x2, y: y2 } = pos;
+        // const { x: x1, y: y1 } = this.dragStartPoint;
+        // const { x: x2, y: y2 } = pos;
 
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
+        // const minX = Math.min(x1, x2);
+        // const maxX = Math.max(x1, x2);
+        // const minY = Math.min(y1, y2);
+        // const maxY = Math.max(y1, y2);
 
-        this.selected.forEach(unit => {
-            unit.get(BoxComponent)!.set({ lineWidth: 0 });
-        });
+        // this.selected = this.units.filter(selectable => {
+        //     const unit = selectable.entity;
+        //     return unit.position.x >= minX &&
+        //         unit.position.y >= minY &&
+        //         unit.position.x + unit.width <= maxX &&
+        //         unit.position.y + unit.height <= maxY;
+        // });
 
-        this.selected = this.units.filter(unit => {
-            return unit.position.x >= minX &&
-                unit.position.y >= minY &&
-                unit.position.x + unit.width <= maxX &&
-                unit.position.y + unit.height <= maxY;
-        });
-        this.selected.forEach(unit => {
-            unit.get(BoxComponent)!.set({ lineWidth: 3 });
-        });
+        // this.selected.forEach(selectable => {
+        //     selectable.select();
+        // });
     }
 
     dragend_0(pos: Point) {
+        if (this.dragStartPoint) {
+            const { x: x1, y: y1 } = this.dragStartPoint;
+            const { x: x2, y: y2 } = pos;
+
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+
+            this.units.forEach(selectable => {
+                const unit = selectable.entity;
+                const hovering = unit.position.x >= minX &&
+                    unit.position.y >= minY &&
+                    unit.position.x + unit.width <= maxX &&
+                    unit.position.y + unit.height <= maxY;
+                if (hovering) {
+                    selectable.select();
+                }
+            });
+        }
         this.dragStartPoint = undefined;
     }
 
     update(dt: number) {
         super.update(dt);
+
+        if (this.dragStartPoint) {
+            const { x: x1, y: y1 } = this.dragStartPoint;
+            const { x: x2, y: y2 } = this.game.mouse;
+
+            const minX = Math.min(x1, x2);
+            const maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+
+            this.units.forEach(selectable => {
+                const unit = selectable.entity;
+                selectable.hovering = unit.position.x >= minX &&
+                    unit.position.y >= minY &&
+                    unit.position.x + unit.width <= maxX &&
+                    unit.position.y + unit.height <= maxY;
+            });
+        }
     }
 
     render(context: CanvasRenderingContext2D) {
