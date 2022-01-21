@@ -5,9 +5,9 @@ export class Selectable extends Component {
     hovering = false;
     selected = false;
 
-    update(dt: number, game: typeof Game) {
-        this.hovering = this.entity.contains(game.mouse);
-    }
+    // update(dt: number, game: typeof Game) {
+    //     this.hovering = this.entity.contains(game.mouse);
+    // }
 
     select() {
         this.selected = true;

@@ -10,6 +10,7 @@ import {
 import { Camera } from "../components/camera";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
+import { DialogBox } from "../entities/dialog-box";
 
 export class CityBuilderState extends State {
     dragStartPoint?: Point;
@@ -17,6 +18,13 @@ export class CityBuilderState extends State {
     hexes: Entity[] = [];
     units: Selectable[] = [];
     resources: Selectable[] = [];
+
+    worldMouse = new Point();
+
+    zoom = 1.5;
+    camera: Entity;
+
+    dialogBox = new DialogBox(this);
 
     constructor() {
         super();
@@ -96,10 +104,23 @@ export class CityBuilderState extends State {
         });
         townCenter.add(Selectable);
 
-        const camera = new Entity(this);
-        camera.add(Camera).target = townCenter;
+        this.camera = new Entity(this);
+        this.camera.add(Camera).target = townCenter;
 
-        this.zoom = 1.5;
+        this.dialogBox.position.x = 100;
+        this.dialogBox.position.y = 100;
+        this.dialogBox.width = 600;
+        this.dialogBox.height = 800;
+        this.dialogBox.setInfo('Test title');
+        this.remove(this.dialogBox);
+    }
+
+    toWorldPos(pos: Point) {
+        const result = pos.copy();
+        result.add(this.game.size.copy().mult(-0.5));
+        result.mult(1 / this.zoom);
+        result.add(this.camera.position);
+        return result;
     }
 
     mousewheel({ deltaY }: WheelEvent) {
@@ -121,6 +142,13 @@ export class CityBuilderState extends State {
                 selectable.deselect();
             }
         });
+
+        const selected = this.entities.filter(entity => {
+            const selectable = entity.get(Selectable);
+            return selectable && (selectable.selected);
+        });
+
+        this.dialogBox.setInfo(`${selected.length} selected`);
     }
 
     mouseup_2() {
@@ -135,7 +163,7 @@ export class CityBuilderState extends State {
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
-        this.dragStartPoint = pos;
+        this.dragStartPoint = this.toWorldPos(pos);
 
         if (!shiftKey) {
             this.units.forEach(selectable => selectable.deselect());
@@ -145,7 +173,7 @@ export class CityBuilderState extends State {
     dragend_0(pos: Point) {
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = pos;
+            const { x: x2, y: y2 } = this.toWorldPos(pos);
 
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
@@ -169,9 +197,17 @@ export class CityBuilderState extends State {
     update(dt: number) {
         super.update(dt);
 
+        const worldMouse = this.toWorldPos(this.game.mouse);
+        this.entities.forEach(entity => {
+            const selectable = entity.get(Selectable);
+            if (selectable) {
+                selectable.hovering = entity.contains(worldMouse);
+            }
+        })
+
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse;
+            const { x: x2, y: y2 } = worldMouse;
 
             const minX = Math.min(x1, x2);
             const maxX = Math.max(x1, x2);
@@ -189,12 +225,17 @@ export class CityBuilderState extends State {
     }
 
     render(context: CanvasRenderingContext2D) {
+        context.save();
+        context.translate(this.game.size.x / 2, this.game.size.y / 2);
+        context.scale(this.zoom, this.zoom);
+        context.translate(-this.camera.position.x, -this.camera.position.y);
+
         super.render(context);
 
         // Cool lil unit selector
         if (this.dragStartPoint) {
             const { x: x1, y: y1 } = this.dragStartPoint;
-            const { x: x2, y: y2 } = this.game.mouse;
+            const { x: x2, y: y2 } = this.toWorldPos(this.game.mouse);
 
             context.fillStyle = 'rgba(177, 177, 177, 0.25)'
             context.fillRect(x1, y1, x2 - x1, y2 - y1);
@@ -203,5 +244,9 @@ export class CityBuilderState extends State {
             context.lineWidth = 5;
             context.strokeRect(x1, y1, x2 - x1, y2 - y1);
         }
+
+        context.restore();
+
+        this.dialogBox.render(context);
     }
 };

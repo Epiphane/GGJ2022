@@ -226,13 +226,7 @@ class Game {
         const canvasRect = this.canvas.getBoundingClientRect();
         let mx = (evt.clientX - canvasRect.left) / canvasRect.width;
         let my = (evt.clientY - canvasRect.top) / canvasRect.height;
-
-        mx = (mx - 0.5) * this.size.x / this.state.zoom;
-        mx += this.state.cameraOffset.x;
-        my = (my - 0.5) * this.size.y / this.state.zoom;
-        my += this.state.cameraOffset.y;
-
-        return new Point(mx, my);
+        return new Point(mx, my).mult(this.size);
     }
 
     resize() {
@@ -380,9 +374,6 @@ class Game {
             context.fillStyle = this.state.clearColor ?? this.clearColor;
             context.fillRect(0, 0, this.size.x, this.size.y);
         }
-        context.translate(this.size.x / 2, this.size.y / 2);
-        context.scale(this.state.zoom, this.state.zoom);
-        context.translate(-this.state.cameraOffset.x, -this.state.cameraOffset.y);
 
         this.state.render(context);
         context.restore();
@@ -441,9 +432,6 @@ export class State {
     updated: boolean = false;
     stopClear: boolean = false;
     clearColor?: FillStyle;
-
-    zoom = 1;
-    cameraOffset = new Point();
 
     game: Game = game;
     entities: Entity[] = [];

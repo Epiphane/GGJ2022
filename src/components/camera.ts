@@ -62,6 +62,5 @@ export class Camera extends Component {
         let moveY = dy * 0.05;
 
         this.entity.position.add(moveX, moveY);
-        this.entity.state.cameraOffset = this.entity.position;
     }
 }
