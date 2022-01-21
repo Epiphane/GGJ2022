@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "concurrently \"tsc -w\" \"nodemon index.js\"",
-    "build": "tsc && cp -r audio dist && cp -r css dist && cp index.html dist && cp require.js dist"
+    "build": "tsc && cp -r audio dist && cp -r css dist && cp index.html dist && cp require.js dist && cp favicon.ico dist"
   },
   "repository": {
     "type": "git",
