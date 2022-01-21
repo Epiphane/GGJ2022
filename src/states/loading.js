@@ -1,4 +1,4 @@
-define(["require", "exports", "../../lib/juicy"], function (require, exports, juicy_1) {
+define(["require", "exports", "../../lib/juicy", "./city-builder"], function (require, exports, juicy_1, city_builder_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.LoadingScreen = void 0;
@@ -18,6 +18,7 @@ define(["require", "exports", "../../lib/juicy"], function (require, exports, ju
         }
         update(dt) {
             super.update(dt);
+            this.game.setState(new city_builder_1.CityBuilderState());
         }
         render(context) {
             super.render(context);
