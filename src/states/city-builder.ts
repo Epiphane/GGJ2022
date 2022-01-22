@@ -117,6 +117,10 @@ export class CityBuilderState extends State {
 
     toWorldPos(pos: Point) {
         const result = pos.copy();
+        result.x += this.dialogBox.width / 2;
+        if (result.x >= this.dialogBox.position.x + this.dialogBox.width / 2) {
+            result.x = this.dialogBox.position.x + this.dialogBox.width / 2;
+        }
         result.add(this.game.size.copy().mult(-0.5));
         result.mult(1 / this.zoom);
         result.add(this.camera.position);
