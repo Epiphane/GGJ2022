@@ -7,13 +7,13 @@ file_blobs:
   package.json: 6d01f288be6ad95cc5550fa789a3b47cc75fae3c
 ---
 
-_aka "Why did Elliot just add 100MB to node\_modules_ 🤬_"_
+_aka Why did Elliot just add 100MB to node\_modules_ 🤬
 
 **tl;dr code UI fast and ez, and make it so if you change the UI code it does a true "hot reload" (preserves state but updates the UI around it)**
 
 I'm going to go through each of the new npm packages added to `package.json`:
 
-### react
+## React
 
 <br/>
 
@@ -67,11 +67,46 @@ root:
 
 `react`'s only job is to say:
 
-"To get to the new state, we need to add a `file0.txt` node as the first child of `folderA`".
+**"To get to the new state, we need to add a** `file0.txt` **node as the first child of** `folderA`**".**
 
-In order to actually make a user interface
+But... to actually make a user interface, we need another library. Enter...
 
-**It's very cheap to manipulate data structures, but very expensive to make changes to a User Interface.**
+# react-dom
+
+### React -> UI
+
+If you want to make a iOS or Android app with React, you would use [React Native](https://reactnative.dev/). If you want to make a command-line tool with React, you would use [react-ink](https://github.com/vadimdemedes/ink). If you want to make a web interface with React, you would use [react-dom](https://reactjs.org/docs/react-dom.html).
+
+All of these libraries listen to `react` and create a UI based on what `react` tells it to do.
+
+Consider the above "file directory" example. When `react` says **"We need to add a** `file0.txt` **node as the first child of** `folderA`**,"** React Native on iOS might do something like:
+
+```
+// folderA is an existing UIView
+let file0 = UIView()
+folderA.insertSubview(file0, atIndex: 0)
+```
+
+Meanwhile, `react-dom` would do something like:
+
+```
+let file0 = document.createElement("div")
+document.getElementById("folderA").prepend(file0)
+```
+
+Cool!
+
+<br/>
+
+<div align="center"><img src="https://firebasestorage.googleapis.com/v0/b/swimmio-content/o/repositories%2FZ2l0aHViJTNBJTNBR0dKMjAyMiUzQSUzQUVwaXBoYW5l%2F456770fa-940a-4e30-81f4-b572bc1b37c9.png?alt=media&token=5f4c8aed-eaeb-48d9-84a7-42040e6cb7f7" style="width:'25%'"/></div>
+
+<br/>
+
+_but why??_
+
+<br/>
+
+**It's very very cheap to manipulate data, and it's very expensive to manipulate UI elements.**
 
 <br/>
 
