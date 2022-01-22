@@ -55,10 +55,7 @@ class Game {
 
     size = new Point();
 
-    private KEYS: KeyNameToCodeMap = {};
-    private CODES: { [key: number]: string } = {};
-
-    private keyState: { [key: number]: boolean } = {};
+    private keyState: { [key: string]: boolean } = {};
     private listener: { [key: string]: EventListener } = {};
 
     private debug?: HTMLElement;
@@ -105,34 +102,16 @@ class Game {
 
         this.setCanvas(canv);
 
-        // Input stuff
-        this.KEYS = keys || {};
-        this.CODES = {};
-        for (const key in keys) {
-            this.CODES[keys[key]!] = key;
-        }
-
         // document hooks
         document.onkeydown = (evt) => {
-            this.keyState[evt.keyCode] = true;
-
-            const method = 'keyDown_' + this.CODES[evt.keyCode];
-            const state = this.state as any;
-            if (state && state[method]) {
-                state[method](this.CODES[evt.keyCode]);
-            }
+            this.keyState[evt.key] = true;
+            this.trigger(`keyDown_${evt.key}`, evt);
         };
 
         document.onkeyup = (evt) => {
-            this.keyState[evt.keyCode] = false;
-
+            this.keyState[evt.key] = true;
             this.trigger('keypress', evt);
-
-            const method = 'key_' + this.CODES[evt.keyCode];
-            const state = this.state as any;
-            if (state && state[method]) {
-                state[method](this.CODES[evt.keyCode]);
-            }
+            this.trigger(`key_${evt.key}`, evt);
         };
 
         return this; // Enable chaining
@@ -168,14 +147,14 @@ class Game {
 
         let startDrag: (MouseEvent | undefined)[] = [];
         let dragging: boolean[] = [];
-        canvas.onmousedown = (evt: MouseEvent) => {
+        document.onmousedown = (evt: MouseEvent) => {
             this.triggerAtPos('mousedown', evt);
 
             if (!startDrag[evt.button]) {
                 startDrag[evt.button] = evt;
             }
         };
-        canvas.onmouseup = (evt: MouseEvent) => {
+        document.onmouseup = (evt: MouseEvent) => {
             this.triggerAtPos(`mouseup`, evt);
 
             if (!startDrag[evt.button]) {
@@ -192,7 +171,7 @@ class Game {
             startDrag[evt.button] = undefined;
             dragging[evt.button] = false;
         };
-        canvas.onmousemove = (evt: MouseEvent) => {
+        document.onmousemove = (evt: MouseEvent) => {
             this.triggerAtPos('mousemove', evt);
             this.mouse = this.getCanvasCoords(evt);
 
@@ -210,7 +189,7 @@ class Game {
                 }
             });
         }
-        canvas.oncontextmenu = (evt: MouseEvent) => {
+        document.oncontextmenu = (evt: MouseEvent) => {
             evt.preventDefault();
         }
 
@@ -224,8 +203,8 @@ class Game {
         }
 
         const canvasRect = this.canvas.getBoundingClientRect();
-        let mx = (evt.clientX - canvasRect.left) / canvasRect.width;
-        let my = (evt.clientY - canvasRect.top) / canvasRect.height;
+        let mx = Math.min(1, Math.max(0, (evt.clientX - canvasRect.left) / canvasRect.width));
+        let my = Math.min(1, Math.max(0, (evt.clientY - canvasRect.top) / canvasRect.height));
         return new Point(mx, my).mult(this.size);
     }
 
@@ -233,17 +212,6 @@ class Game {
         if (!this.canvas) {
             throw Error('Game was not properly initialized - canvas is unavailable');
         }
-
-        // const parent = this.canvas.parentElement;
-        // const width = parent ? parent.clientWidth : this.canvas.clientWidth;
-        // const height = parent ? parent.clientHeight : this.canvas.clientHeight;
-
-        // this.canvas.width = width;
-        // this.canvas.height = width * this.height / this.width;
-        // if (this.canvas.height > height) {
-        //     this.canvas.height = height;
-        //     this.canvas.width = height * this.width / this.height;
-        // }
 
         // Make sure we re-render
         if (this.state) {
@@ -259,7 +227,7 @@ class Game {
 
     keyDown(key: string | string[]): boolean {
         if (typeof (key) === 'string') {
-            return this.keyState[this.KEYS[key]!]!;
+            return this.keyState[key] ?? false;
         }
         else {
             return key.some(k => this.keyDown(k))
