@@ -98,6 +98,10 @@ Cool!
 
 <br/>
 
+<div align="center"><img src="https://firebasestorage.googleapis.com/v0/b/swimmio-content/o/repositories%2FZ2l0aHViJTNBJTNBR0dKMjAyMiUzQSUzQUVwaXBoYW5l%2F3cdacdf7-5d22-4d5e-a64f-40f32d403370.gif?alt=media&token=0487f0fe-1516-485e-9dca-3f95809377c8" style="width:'50%'"/></div>
+
+<br/>
+
 <div align="center"><img src="https://firebasestorage.googleapis.com/v0/b/swimmio-content/o/repositories%2FZ2l0aHViJTNBJTNBR0dKMjAyMiUzQSUzQUVwaXBoYW5l%2F456770fa-940a-4e30-81f4-b572bc1b37c9.png?alt=media&token=5f4c8aed-eaeb-48d9-84a7-42040e6cb7f7" style="width:'25%'"/></div>
 
 <br/>
