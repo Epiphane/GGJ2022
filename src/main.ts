@@ -5,7 +5,7 @@ import { __DEV__, } from './helpers/debug';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 
-Game.init({
+Game.init && Game.init({
     canvas,
     clearColor: '#000000',
     keys: KeyMapping,

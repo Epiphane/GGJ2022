@@ -2,10 +2,15 @@ const http = require("http");
 const fs = require("fs");
 const WebSocket = require("ws");
 
+import ReactDOM from "react-dom";
+import { App } from "./App"
+
 const basedir = __dirname;
 var start = Date.now();
 
-fs.writeFileSync('./version.js', `var require = { urlArgs: "v=${start}" };`);
+if (fs.writeFileSync) {
+  fs.writeFileSync('./version.js', `var require = { urlArgs: "v=${start}" };`);
+}
 
 function serveStatResult(res, path, err) {
   if (err) {
@@ -76,4 +81,7 @@ const wss = new WebSocket.Server({
   port: 8081
 });
 
-server.listen(8080);
+server && server.listen(8080);
+
+ReactDOM.render(<App />, document.getElementById('root'));
+
