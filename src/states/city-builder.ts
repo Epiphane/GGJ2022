@@ -107,16 +107,20 @@ export class CityBuilderState extends State {
         this.camera = new Entity(this);
         this.camera.add(Camera).target = townCenter;
 
-        this.dialogBox.position.x = 100;
-        this.dialogBox.position.y = 100;
-        this.dialogBox.width = 600;
-        this.dialogBox.height = 800;
+        this.dialogBox.width = 800;
+        this.dialogBox.height = this.game.size.y;
+        this.dialogBox.position.x = this.game.size.x - this.dialogBox.width;
+        this.dialogBox.position.y = 0;
         this.dialogBox.setInfo('Test title');
         this.remove(this.dialogBox);
     }
 
     toWorldPos(pos: Point) {
         const result = pos.copy();
+        result.x += this.dialogBox.width / 2;
+        if (result.x >= this.dialogBox.position.x + this.dialogBox.width / 2) {
+            result.x = this.dialogBox.position.x + this.dialogBox.width / 2;
+        }
         result.add(this.game.size.copy().mult(-0.5));
         result.mult(1 / this.zoom);
         result.add(this.camera.position);
@@ -224,8 +228,14 @@ export class CityBuilderState extends State {
         }
     }
 
+    keypress(key: any) {
+        console.log(key);
+    }
+
     render(context: CanvasRenderingContext2D) {
         context.save();
+        // Move over a little bit so that the non-sidebar is centered
+        context.translate(-this.dialogBox.width / 2, 0);
         context.translate(this.game.size.x / 2, this.game.size.y / 2);
         context.scale(this.zoom, this.zoom);
         context.translate(-this.camera.position.x, -this.camera.position.y);
