@@ -1,4 +1,4 @@
-define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1, dialog_box_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1, unit_1, dialog_box_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
@@ -43,6 +43,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 unit.width = 50;
                 unit.height = 50;
                 unit.position = this.game.size.copy().mult(Math.random() - 0.5, Math.random() - 0.5).mult(1 / 3);
+                unit.add(unit_1.UnitComponent);
                 this.units.push(unit.add(selectable_1.Selectable));
             }
             for (let i = 0; i < 10; i++) {
@@ -81,8 +82,8 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.camera.add(camera_1.Camera).target = townCenter;
             this.dialogBox.width = 800;
             this.dialogBox.height = this.game.size.y;
-            this.dialogBox.position.x = this.game.size.x - this.dialogBox.width;
-            this.dialogBox.position.y = 0;
+            this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
+            this.dialogBox.position.y = this.game.size.y / 2;
             this.dialogBox.setInfo('Test title');
             this.remove(this.dialogBox);
         }
@@ -115,21 +116,18 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                     selectable.deselect();
                 }
             });
-            const selected = this.entities.filter(entity => {
-                const selectable = entity.get(selectable_1.Selectable);
-                return selectable && (selectable.selected);
-            });
-            this.dialogBox.setInfo(`${selected.length} selected`);
         }
-        mouseup_2() {
+        mouseup_2(pos) {
             const selected = this.units.filter(s => s.selected);
             const resource = this.resources.find(s => s.hovering);
+            let dest = resource ? resource.entity.position.copy() : this.toWorldPos(pos);
             if (resource) {
                 console.log(`Moving ${selected.length} units to a resource`);
             }
             else {
                 console.log(`Moving ${selected.length} units`);
             }
+            selected.forEach(selected => { var _a; return (_a = selected.entity.get(unit_1.UnitComponent)) === null || _a === void 0 ? void 0 : _a.moveTo(dest); });
         }
         dragstart_0(pos, { shiftKey }) {
             this.dragStartPoint = this.toWorldPos(pos);
@@ -147,10 +145,10 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 const maxY = Math.max(y1, y2);
                 this.units.forEach(selectable => {
                     const unit = selectable.entity;
-                    const hovering = unit.position.x >= minX &&
-                        unit.position.y >= minY &&
-                        unit.position.x + unit.width <= maxX &&
-                        unit.position.y + unit.height <= maxY;
+                    const hovering = unit.position.x - unit.width / 2 >= minX &&
+                        unit.position.y - unit.height / 2 >= minY &&
+                        unit.position.x + unit.width / 2 <= maxX &&
+                        unit.position.y + unit.height / 2 <= maxY;
                     if (hovering) {
                         selectable.select();
                     }
@@ -160,6 +158,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
         }
         update(dt) {
             super.update(dt);
+            this.dialogBox.update(dt);
             const worldMouse = this.toWorldPos(this.game.mouse);
             this.entities.forEach(entity => {
                 const selectable = entity.get(selectable_1.Selectable);
@@ -176,12 +175,17 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 const maxY = Math.max(y1, y2);
                 this.units.forEach(selectable => {
                     const unit = selectable.entity;
-                    selectable.hovering = unit.position.x >= minX &&
-                        unit.position.y >= minY &&
-                        unit.position.x + unit.width <= maxX &&
-                        unit.position.y + unit.height <= maxY;
+                    selectable.hovering = unit.position.x - unit.width / 2 >= minX &&
+                        unit.position.y - unit.height / 2 >= minY &&
+                        unit.position.x + unit.width / 2 <= maxX &&
+                        unit.position.y + unit.height / 2 <= maxY;
                 });
             }
+            const selected = this.entities.filter(entity => {
+                const selectable = entity.get(selectable_1.Selectable);
+                return selectable && (selectable.selected);
+            });
+            this.dialogBox.setInfo(`${selected.length} selected`);
         }
         keypress(key) {
             console.log(key);

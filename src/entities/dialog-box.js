@@ -13,7 +13,8 @@ define(["require", "exports", "../../lib/juicy", "../components/nine-slice"], fu
                 bottom: 64,
             });
             const title = new juicy_1.Entity(state);
-            title.position.add(50, 50);
+            title.position.x = this.width / 2;
+            title.position.y = 50;
             this.title = title.add(juicy_1.TextComponent);
             this.title.set({
                 text: 'Title',
@@ -21,6 +22,11 @@ define(["require", "exports", "../../lib/juicy", "../components/nine-slice"], fu
                 fillStyle: 'white',
             });
             this.addChild(title);
+        }
+        update(dt) {
+            this.title.entity.position.x = this.width / 2;
+            this.title.entity.position.y = 100;
+            super.update(dt);
         }
         setInfo(title) {
             this.title.set({ text: title });
