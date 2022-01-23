@@ -532,10 +532,10 @@ export class Entity {
 
     contains(point: Point) {
         point = point.copy().sub(this.globalPosition());
-        return point.x >= 0 &&
-            point.y >= 0 &&
-            point.x <= this.width &&
-            point.y <= this.height;
+        return point.x >= -this.width / 2 &&
+            point.y >= -this.height / 2 &&
+            point.x <= this.width / 2 &&
+            point.y <= this.height / 2;
     }
 
     distance(other: Entity | Point) {
@@ -636,7 +636,7 @@ export class Entity {
 
     render(context: CanvasRenderingContext2D) {
         context.save();
-        context.translate(Math.floor(this.position.x), Math.floor(this.position.y));
+        context.translate(Math.floor(this.position.x - this.width / 2), Math.floor(this.position.y - this.height / 2));
         context.scale(this.scale.x, this.scale.y);
 
         let renderArgs: RenderArgs;
