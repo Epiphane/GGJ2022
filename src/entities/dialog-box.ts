@@ -16,7 +16,8 @@ export class DialogBox extends Entity {
         });
 
         const title = new Entity(state);
-        title.position.add(50, 50);
+        title.position.x = this.width / 2;
+        title.position.y = 50;
 
         this.title = title.add(TextComponent);
         this.title.set({
@@ -25,6 +26,13 @@ export class DialogBox extends Entity {
             fillStyle: 'white',
         });
         this.addChild(title);
+    }
+
+    update(dt: number) {
+        this.title.entity.position.x = this.width / 2;
+        this.title.entity.position.y = 100;
+
+        super.update(dt);
     }
 
     setInfo(title: string) {

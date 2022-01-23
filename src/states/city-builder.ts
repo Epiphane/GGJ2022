@@ -10,6 +10,7 @@ import {
 import { Camera } from "../components/camera";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
+import { UnitComponent } from "../components/unit";
 import { DialogBox } from "../entities/dialog-box";
 
 export class CityBuilderState extends State {
@@ -67,6 +68,7 @@ export class CityBuilderState extends State {
             unit.width = 50;
             unit.height = 50;
             unit.position = this.game.size.copy().mult(Math.random() - 0.5, Math.random() - 0.5).mult(1 / 3);
+            unit.add(UnitComponent);
             this.units.push(unit.add(Selectable));
         }
 
@@ -109,8 +111,8 @@ export class CityBuilderState extends State {
 
         this.dialogBox.width = 800;
         this.dialogBox.height = this.game.size.y;
-        this.dialogBox.position.x = this.game.size.x - this.dialogBox.width;
-        this.dialogBox.position.y = 0;
+        this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
+        this.dialogBox.position.y = this.game.size.y / 2;
         this.dialogBox.setInfo('Test title');
         this.remove(this.dialogBox);
     }
@@ -146,24 +148,21 @@ export class CityBuilderState extends State {
                 selectable.deselect();
             }
         });
-
-        const selected = this.entities.filter(entity => {
-            const selectable = entity.get(Selectable);
-            return selectable && (selectable.selected);
-        });
-
-        this.dialogBox.setInfo(`${selected.length} selected`);
     }
 
-    mouseup_2() {
+    mouseup_2(pos: Point) {
         const selected = this.units.filter(s => s.selected);
         const resource = this.resources.find(s => s.hovering);
+
+        let dest = resource ? resource.entity.position.copy() : this.toWorldPos(pos);
         if (resource) {
             console.log(`Moving ${selected.length} units to a resource`);
         }
         else {
             console.log(`Moving ${selected.length} units`);
         }
+
+        selected.forEach(selected => selected.entity.get(UnitComponent)?.moveTo(dest));
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
@@ -186,10 +185,10 @@ export class CityBuilderState extends State {
 
             this.units.forEach(selectable => {
                 const unit = selectable.entity;
-                const hovering = unit.position.x >= minX &&
-                    unit.position.y >= minY &&
-                    unit.position.x + unit.width <= maxX &&
-                    unit.position.y + unit.height <= maxY;
+                const hovering = unit.position.x - unit.width / 2 >= minX &&
+                    unit.position.y - unit.height / 2 >= minY &&
+                    unit.position.x + unit.width / 2 <= maxX &&
+                    unit.position.y + unit.height / 2 <= maxY;
                 if (hovering) {
                     selectable.select();
                 }
@@ -200,6 +199,8 @@ export class CityBuilderState extends State {
 
     update(dt: number) {
         super.update(dt);
+
+        this.dialogBox.update(dt);
 
         const worldMouse = this.toWorldPos(this.game.mouse);
         this.entities.forEach(entity => {
@@ -220,12 +221,18 @@ export class CityBuilderState extends State {
 
             this.units.forEach(selectable => {
                 const unit = selectable.entity;
-                selectable.hovering = unit.position.x >= minX &&
-                    unit.position.y >= minY &&
-                    unit.position.x + unit.width <= maxX &&
-                    unit.position.y + unit.height <= maxY;
+                selectable.hovering = unit.position.x - unit.width / 2 >= minX &&
+                    unit.position.y - unit.height / 2 >= minY &&
+                    unit.position.x + unit.width / 2 <= maxX &&
+                    unit.position.y + unit.height / 2 <= maxY;
             });
         }
+
+        const selected = this.entities.filter(entity => {
+            const selectable = entity.get(Selectable);
+            return selectable && (selectable.selected);
+        });
+        this.dialogBox.setInfo(`${selected.length} selected`);
     }
 
     keypress(key: any) {
