@@ -2,13 +2,11 @@
   "name": "gbjam9",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/main.js",
-  "source": "src/main.ts",
+  "main": "index.js",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
-    "watch": "parcel watch",
     "dev": "concurrently \"tsc -w\" \"nodemon index.js\"",
     "build": "tsc && cp -r audio dist && cp -r css dist && cp index.html dist && cp require.js dist && cp -r img dist && cp favicon.ico dist"
   },
@@ -24,7 +22,6 @@
   },
   "homepage": "https://github.com/Epiphane/gbjam9#readme",
   "devDependencies": {
-    "@parcel/transformer-typescript-tsc": "^2.2.1",
     "chokidar": "^3.5.2",
     "concurrently": "^5.3.0",
     "nodemon": "^2.0.6",
@@ -34,11 +31,7 @@
   },
   "dependencies": {
     "@types/box2d": "0.0.35",
-    "@types/react": "^17.0.38",
-    "@types/react-dom": "^17.0.11",
     "@types/three": "^0.103.2",
-    "parcel": "^2.2.1",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2"
+    "react": "^17.0.2"
   }
 }
