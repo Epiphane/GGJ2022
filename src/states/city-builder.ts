@@ -64,14 +64,6 @@ export class CityBuilderState extends State {
                 };
 
                 hexEntity.position = new Point(xOffset, yOffset);
-
-                var hex = hexEntity.add(HexComponent);
-                if (y % 2 != 0) {
-                    hex.hex = new Hex(x * 2, y);
-                } else {
-                    hex.hex = new Hex(x * 2 + 1, y);
-                }
-
                 this.hexes.push(hexEntity);
             }
         }
@@ -126,6 +118,13 @@ export class CityBuilderState extends State {
 
         this.camera = new Entity(this);
         this.camera.add(Camera).target = townCenter;
+
+        // Reverse-compute Hex coordinate from worldPosition
+        this.hexes.forEach(h => {
+            const hexFromWorld = Hex.pointToHex(this.toWorldPos(h.position));
+            var hex = h.add(HexComponent);
+            hex.hex = hexFromWorld;
+        });
 
         this.dialogBox.width = 800;
         this.dialogBox.height = this.game.size.y;
@@ -182,11 +181,9 @@ export class CityBuilderState extends State {
     }
 
     mouseup_2(pos: Point) {
-        const hexToCheck = Hex.pointToHex(pos);
-        // console.log(pos);
-        // console.log(hexToCheck);
-        // console.log(hexToCheck.toPoint());
-
+        const hexToCheck = this.hexes.filter(h => {
+            h.get(HexComponent)?.hex === Hex.pointToHex(this.toWorldPos(pos));
+        });
         const selected = this.units.filter(s => s.selected);
         const resource2 = this.resources.find(s => s.hovering);
         const resource = resource2?.entity.get(ResourceNode);
