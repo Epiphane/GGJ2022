@@ -1,9 +1,10 @@
-define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, selectable_1, sprite_1, unit_1, dialog_box_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/nine-slice", "../components/resource", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, nine_slice_1, resource_1, selectable_1, sprite_1, unit_1, dialog_box_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
     class CityBuilderState extends juicy_1.State {
         constructor() {
+            var _a;
             super();
             this.hexes = [];
             this.units = [];
@@ -11,6 +12,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.worldMouse = new juicy_1.Point();
             this.zoom = 1.5;
             this.dialogBox = new dialog_box_1.DialogBox(this);
+            this.resourceDisplay = new juicy_1.Entity(this, [nine_slice_1.NineSlice]);
             this.clearColor = '#449944';
             // Using 'odd-r' Offset Coordinate system.
             // E.g. First (0th) row of hexes are aligned edge to edge horizontally
@@ -66,6 +68,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 }
                 ;
                 this.resources.push(unit.add(selectable_1.Selectable));
+                unit.add(resource_1.ResourceNode);
             }
             const townCenter = new juicy_1.Entity(this);
             const sprite = townCenter.add(sprite_1.SpriteComponent);
@@ -84,8 +87,19 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.dialogBox.height = this.game.size.y;
             this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
             this.dialogBox.position.y = this.game.size.y / 2;
-            this.dialogBox.setInfo('Test title');
             this.remove(this.dialogBox);
+            this.resourceDisplay.width = this.game.size.x - this.dialogBox.width;
+            this.resourceDisplay.height = 128;
+            this.resourceDisplay.position.x = this.resourceDisplay.width / 2;
+            this.resourceDisplay.position.y = this.resourceDisplay.height / 2;
+            (_a = this.resourceDisplay.get(nine_slice_1.NineSlice)) === null || _a === void 0 ? void 0 : _a.set({
+                src: './img/dialog_box.png',
+                left: 64,
+                right: 64,
+                top: 64,
+                bottom: 64,
+            });
+            this.remove(this.resourceDisplay);
         }
         toWorldPos(pos) {
             const result = pos.copy();
@@ -103,13 +117,20 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.zoom = Math.min(Math.max(this.zoom, 1), 2.5);
         }
         click_0(_, { shiftKey }) {
-            this.units.forEach(selectable => {
+            // Use find to early out if something returns true;
+            let somethingSelected = false;
+            this.entities.forEach(entity => {
+                const selectable = entity.get(selectable_1.Selectable);
+                if (!selectable) {
+                    return;
+                }
                 if (selectable.hovering) {
                     if (shiftKey && selectable.selected) {
                         selectable.deselect();
                     }
-                    else {
+                    else if (!somethingSelected) {
                         selectable.select();
+                        somethingSelected = true;
                     }
                 }
                 else if (!shiftKey) {
@@ -119,20 +140,25 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
         }
         mouseup_2(pos) {
             const selected = this.units.filter(s => s.selected);
-            const resource = this.resources.find(s => s.hovering);
+            const resource2 = this.resources.find(s => s.hovering);
+            const resource = resource2 === null || resource2 === void 0 ? void 0 : resource2.entity.get(resource_1.ResourceNode);
             let dest = resource ? resource.entity.position.copy() : this.toWorldPos(pos);
-            if (resource) {
-                console.log(`Moving ${selected.length} units to a resource`);
-            }
-            else {
-                console.log(`Moving ${selected.length} units`);
-            }
-            selected.forEach(selected => { var _a; return (_a = selected.entity.get(unit_1.UnitComponent)) === null || _a === void 0 ? void 0 : _a.moveTo(dest); });
+            selected.forEach(selected => {
+                const unit = selected.entity.get(unit_1.UnitComponent);
+                if (!unit) {
+                    return;
+                }
+                unit.cancelTasks();
+                unit.queueTask({ type: 'Move', dest });
+                if (resource) {
+                    unit.queueTask({ type: 'Harvest', resource });
+                }
+            });
         }
         dragstart_0(pos, { shiftKey }) {
             this.dragStartPoint = this.toWorldPos(pos);
             if (!shiftKey) {
-                this.units.forEach(selectable => selectable.deselect());
+                this.entities.forEach(e => { var _a; return (_a = e.get(selectable_1.Selectable)) === null || _a === void 0 ? void 0 : _a.deselect(); });
             }
         }
         dragend_0(pos) {
@@ -158,7 +184,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
         }
         update(dt) {
             super.update(dt);
-            this.dialogBox.update(dt);
+            const shiftKey = this.game.keyDown('Shift');
             const worldMouse = this.toWorldPos(this.game.mouse);
             this.entities.forEach(entity => {
                 const selectable = entity.get(selectable_1.Selectable);
@@ -185,7 +211,9 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 const selectable = entity.get(selectable_1.Selectable);
                 return selectable && (selectable.selected);
             });
-            this.dialogBox.setInfo(`${selected.length} selected`);
+            this.dialogBox.setSelected(selected);
+            this.dialogBox.update(dt);
+            this.resourceDisplay.update(dt);
         }
         keypress(key) {
             console.log(key);
@@ -210,6 +238,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             }
             context.restore();
             this.dialogBox.render(context);
+            this.resourceDisplay.render(context);
         }
     }
     exports.CityBuilderState = CityBuilderState;

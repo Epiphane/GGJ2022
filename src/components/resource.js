@@ -4,14 +4,17 @@ define(["require", "exports", "../../lib/juicy"], function (require, exports, ju
     exports.ResourceNode = exports.ResourceType = void 0;
     var ResourceType;
     (function (ResourceType) {
-        ResourceType[ResourceType["Wood"] = 0] = "Wood";
+        ResourceType["Wood"] = "Wood";
     })(ResourceType = exports.ResourceType || (exports.ResourceType = {}));
     ;
     class ResourceNode extends juicy_1.Component {
         constructor() {
             super(...arguments);
-            this.type = ResourceType.Wood;
-            this.amount = 100;
+            this.name = 'Forest';
+            this.available = {
+                type: ResourceType.Wood,
+                amount: 1000
+            };
         }
     }
     exports.ResourceNode = ResourceNode;
