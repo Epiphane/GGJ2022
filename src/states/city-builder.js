@@ -1,18 +1,18 @@
-define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/nine-slice", "../components/resource", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box"], function (require, exports, juicy_1, camera_1, nine_slice_1, resource_1, selectable_1, sprite_1, unit_1, dialog_box_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/collector", "../components/inventory", "../components/resource", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box", "../entities/resource-display"], function (require, exports, juicy_1, camera_1, collector_1, inventory_1, resource_1, selectable_1, sprite_1, unit_1, dialog_box_1, resource_display_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
     class CityBuilderState extends juicy_1.State {
         constructor() {
-            var _a;
             super();
             this.hexes = [];
             this.units = [];
             this.resources = [];
             this.worldMouse = new juicy_1.Point();
             this.zoom = 1.5;
+            this.inventory = new inventory_1.Inventory();
             this.dialogBox = new dialog_box_1.DialogBox(this);
-            this.resourceDisplay = new juicy_1.Entity(this, [nine_slice_1.NineSlice]);
+            this.resourceDisplay = new resource_display_1.ResourceDisplay(this, this.inventory);
             this.clearColor = '#449944';
             // Using 'odd-r' Offset Coordinate system.
             // E.g. First (0th) row of hexes are aligned edge to edge horizontally
@@ -80,6 +80,7 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 frameTime: 0,
                 repeat: true
             });
+            townCenter.add(collector_1.Collector).inventory = this.inventory;
             townCenter.add(selectable_1.Selectable);
             this.camera = new juicy_1.Entity(this);
             this.camera.add(camera_1.Camera).target = townCenter;
@@ -92,13 +93,6 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             this.resourceDisplay.height = 128;
             this.resourceDisplay.position.x = this.resourceDisplay.width / 2;
             this.resourceDisplay.position.y = this.resourceDisplay.height / 2;
-            (_a = this.resourceDisplay.get(nine_slice_1.NineSlice)) === null || _a === void 0 ? void 0 : _a.set({
-                src: './img/dialog_box.png',
-                left: 64,
-                right: 64,
-                top: 64,
-                bottom: 64,
-            });
             this.remove(this.resourceDisplay);
         }
         toWorldPos(pos) {
@@ -148,10 +142,11 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                 if (!unit) {
                     return;
                 }
-                unit.cancelTasks();
-                unit.queueTask({ type: 'Move', dest });
                 if (resource) {
-                    unit.queueTask({ type: 'Harvest', resource });
+                    unit.setGoal({ type: 'Harvest', resource });
+                }
+                else {
+                    unit.setGoal({ type: 'Move', dest });
                 }
             });
         }

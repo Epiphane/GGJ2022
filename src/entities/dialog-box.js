@@ -50,22 +50,12 @@ define(["require", "exports", "../../lib/juicy", "../components/nine-slice", "..
                 const unit = entity.get(unit_1.UnitComponent);
                 if (unit) {
                     this.title.set({ text: `${unit.name}` });
-                    if (unit.carrying.length > 0) {
-                        this.details.set({
-                            text: [
-                                'Carrying:',
-                                ...unit.carrying.map(({ amount, type }) => `${type}: ${amount}`),
-                            ].join('\n')
-                        });
-                    }
-                    else {
-                        this.details.set({
-                            text: [
-                                'Carrying:',
-                                'Nothing',
-                            ].join('\n')
-                        });
-                    }
+                    this.details.set({
+                        text: [
+                            'Carrying:',
+                            ...unit.inventory.toString(),
+                        ].join('\n')
+                    });
                     return;
                 }
                 const resourceNode = entity.get(resource_1.ResourceNode);
