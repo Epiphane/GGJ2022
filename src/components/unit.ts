@@ -1,4 +1,6 @@
 import { Component, Entity, Point } from "../../lib/juicy";
+import { Collector } from "./collector";
+import { Inventory } from "./inventory";
 import { ResourceNode, ResourceStack, ResourceType } from "./resource";
 
 export interface MoveTask {
@@ -6,12 +8,17 @@ export interface MoveTask {
     dest: Point;
 }
 
+export interface UnloadTask {
+    type: 'Unload';
+    collector: Collector;
+}
+
 export interface HarvestTask {
     type: 'Harvest';
     resource: ResourceNode;
 }
 
-export type Task = MoveTask | HarvestTask;
+export type Task = MoveTask | HarvestTask | UnloadTask;
 
 let unitNum = 1;
 
@@ -24,12 +31,44 @@ export class UnitComponent extends Component {
 
     // AI
     tasks: Task[] = [];
+    goal?: Task;
 
     // Inventory
-    carrying: ResourceStack[] = [];
+    inventory!: Inventory;
     harvestTime = 0;
 
     name = `Tom Bombadil ${unitNum++}`;
+
+    init(e: Entity) {
+        this.inventory = e.get(Inventory) ?? e.add(Inventory);
+        this.inventory.maxSize = 10;
+    }
+
+    setGoal(goal: Task) {
+        this.goal = goal;
+        this.cancelTasks();
+        this.makePlan();
+    }
+
+    makePlan() {
+        if (!this.goal) {
+            return;
+        }
+
+        if (this.goal.type === 'Move') {
+            this.queueTask(this.goal);
+        }
+        else if (this.goal.type === 'Harvest') {
+            if (!this.goal.resource.entity.contains(this.entity.position)) {
+                this.queueTask({
+                    type: 'Move',
+                    dest: this.goal.resource.entity.position,
+                })
+            }
+
+            this.queueTask(this.goal);
+        }
+    }
 
     queueTask(command: Task) {
         // TODO make a path that follows hexes
@@ -41,7 +80,7 @@ export class UnitComponent extends Component {
 
             this.tasks.push({ ...command, dest });
         }
-        else if (command.type === 'Harvest') {
+        else {
             this.tasks.push({ ...command });
         }
     }
@@ -50,18 +89,11 @@ export class UnitComponent extends Component {
         this.tasks = [];
     }
 
-    addToInventory(type: ResourceType, amount: number) {
-        const existing = this.carrying.find(stack => stack.type === type);
-        if (existing) {
-            existing.amount += amount;
-        }
-        else {
-            this.carrying.push({ type, amount });
-        }
-    }
-
     update(dt: number) {
         if (this.tasks.length === 0) {
+            if (this.goal) {
+                this.makePlan();
+            }
             return;
         }
 
@@ -96,7 +128,28 @@ export class UnitComponent extends Component {
                 this.harvestTime = 0;
 
                 currentTask.resource.available.amount--;
-                this.addToInventory(currentTask.resource.available.type, 1);
+                this.inventory.add(currentTask.resource.available.type, 1);
+
+                if (this.inventory.isFull()) {
+                    // Find a collector
+                    const collectors = this.entity.state.entities
+                        .map(e => e.get(Collector))
+                        .filter(c => c != undefined) as [Collector];
+                    this.queueTask({
+                        type: 'Move',
+                        dest: collectors[0].entity.position,
+                    });
+                    this.queueTask({ type: 'Unload', collector: collectors[0] });
+                    this.tasks.shift();
+                }
+            }
+        }
+        else if (currentTask.type === 'Unload') {
+            const { collector } = currentTask;
+            if (collector.entity.contains(this.entity.position)) {
+                this.inventory.forEach((type, amt) => collector.inventory.add(type, amt));
+                this.inventory.clear();
+                this.tasks.shift();
             }
         }
     }

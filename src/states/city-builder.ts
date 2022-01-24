@@ -8,12 +8,15 @@ import {
     TextComponent,
 } from "../../lib/juicy";
 import { Camera } from "../components/camera";
+import { Collector } from "../components/collector";
+import { Inventory } from "../components/inventory";
 import { NineSlice } from "../components/nine-slice";
 import { ResourceNode, ResourceType } from "../components/resource";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
 import { UnitComponent } from "../components/unit";
 import { DialogBox } from "../entities/dialog-box";
+import { ResourceDisplay } from "../entities/resource-display";
 
 export class CityBuilderState extends State {
     dragStartPoint?: Point;
@@ -27,8 +30,9 @@ export class CityBuilderState extends State {
     zoom = 1.5;
     camera: Entity;
 
+    inventory = new Inventory();
     dialogBox = new DialogBox(this);
-    resourceDisplay = new Entity(this, [NineSlice]);
+    resourceDisplay = new ResourceDisplay(this, this.inventory);
 
     constructor() {
         super();
@@ -108,6 +112,7 @@ export class CityBuilderState extends State {
             frameTime: 0,
             repeat: true
         });
+        townCenter.add(Collector).inventory = this.inventory;
         townCenter.add(Selectable);
 
         this.camera = new Entity(this);
@@ -123,13 +128,6 @@ export class CityBuilderState extends State {
         this.resourceDisplay.height = 128;
         this.resourceDisplay.position.x = this.resourceDisplay.width / 2;
         this.resourceDisplay.position.y = this.resourceDisplay.height / 2;
-        this.resourceDisplay.get(NineSlice)?.set({
-            src: './img/dialog_box.png',
-            left: 64,
-            right: 64,
-            top: 64,
-            bottom: 64,
-        });
         this.remove(this.resourceDisplay);
     }
 
@@ -186,11 +184,11 @@ export class CityBuilderState extends State {
                 return;
             }
 
-            unit.cancelTasks();
-            unit.queueTask({ type: 'Move', dest });
-
             if (resource) {
-                unit.queueTask({ type: 'Harvest', resource });
+                unit.setGoal({ type: 'Harvest', resource });
+            }
+            else {
+                unit.setGoal({ type: 'Move', dest });
             }
         });
     }

@@ -1,4 +1,5 @@
 import { ComponentList, Entity, Point, State, TextComponent } from "../../lib/juicy";
+import { Inventory } from "../components/inventory";
 import { NineSlice } from "../components/nine-slice";
 import { ResourceNode } from "../components/resource";
 import { UnitComponent } from "../components/unit";
@@ -63,23 +64,12 @@ export class DialogBox extends Entity {
             const unit = entity.get(UnitComponent);
             if (unit) {
                 this.title.set({ text: `${unit.name}` });
-
-                if (unit.carrying.length > 0) {
-                    this.details.set({
-                        text: [
-                            'Carrying:',
-                            ...unit.carrying.map(({ amount, type }) => `${type}: ${amount}`),
-                        ].join('\n')
-                    })
-                }
-                else {
-                    this.details.set({
-                        text: [
-                            'Carrying:',
-                            'Nothing',
-                        ].join('\n')
-                    })
-                }
+                this.details.set({
+                    text: [
+                        'Carrying:',
+                        ...unit.inventory.toString(),
+                    ].join('\n')
+                });
                 return;
             }
 
