@@ -1,5 +1,6 @@
 import { ComponentList, Entity, State, TextComponent } from "../../lib/juicy";
 import { NineSlice } from "../components/nine-slice";
+const dialogBoxImg = require("/img/dialog_box.png")
 
 export class DialogBox extends Entity {
     title: TextComponent;
@@ -8,7 +9,7 @@ export class DialogBox extends Entity {
         super(state);
 
         this.add(NineSlice).set({
-            src: './img/dialog_box.png',
+            src: dialogBoxImg,
             left: 64,
             right: 64,
             top: 64,

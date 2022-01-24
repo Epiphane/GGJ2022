@@ -10,6 +10,8 @@ export interface NineSliceProps {
 
 export class NineSlice extends Component {
     image = new Image();
+    loadedIn = false;
+
     sx: [number, number, number] = [0, 0, 0];
     sy: [number, number, number] = [0, 0, 0];
     sw: [number, number, number] = [0, 0, 0];
@@ -24,11 +26,15 @@ export class NineSlice extends Component {
             this.sw = [left, width - (left + right), right];
             this.sy = [0, top, height - bottom];
             this.sh = [top, height - (top + bottom), bottom];
+            this.loadedIn = true;
         }
     }
 
     render(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
         // Stretch instead of tiling because lazy
+        if (!this.loadedIn) {
+            return
+        }
         const dx = [x, x + this.sw[0], x + w - this.sw[2]] as [number, number, number];
         const dw = [this.sw[0], w - (this.sw[0] + this.sw[2]), this.sw[2]] as [number, number, number];
         const dy = [y, y + this.sh[0], y + h - this.sh[2]] as [number, number, number];

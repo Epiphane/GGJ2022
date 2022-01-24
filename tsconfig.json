@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
-    "module": "AMD",
+    "module": "es6",
     "outDir": "dist",
     "sourceMap": true,
     "strict": true,
     "target": "es2017",
     "baseUrl": "lib",
     "moduleResolution": "node",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react-jsx"
   },
   "compileOnSave": true,
   "include": [

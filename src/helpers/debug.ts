@@ -1,10 +1,12 @@
 import { Game, Sound } from "../../lib/juicy";
-import { SaveManager } from "./save-manager";
+// import { SaveManager } from "./save-manager";
 
-const debugElement = document.createElement('div');
-debugElement.id = 'debug';
-debugElement.classList.add('desktop-only');
-document.body.prepend(debugElement);
+// const debugElement = document.createElement('div');
+// debugElement.id = 'debug';
+// debugElement.classList.add('desktop-only');
+// document.body.prepend(debugElement);
+
+// TODO-EF: Bring most of this back outside
 
 class DebugButton {
     content: () => string;
@@ -21,22 +23,22 @@ class DebugButton {
             onclick?.();
             this.el.textContent = this.content();
         };
-        (parent ?? debugElement).appendChild(this.el);
+        // (parent ?? debugElement).appendChild(this.el);
     }
 }
 
 // Dev mode
-export const __DEV__ = localStorage.getItem('__DEV__') === 'on';
-if (__DEV__) {
-    const fps = document.createElement('span');
-    Game.setDebug(fps);
-    debugElement.appendChild(fps);
-}
+// if (true) {
+//     const fps = document.createElement('span');
+//     Game.setDebug(fps);
+//     debugElement.appendChild(fps);
+// }
+export const __DEV__ = () => {return true };// () => localStorage.getItem('__DEV__') === 'on';
 
 new DebugButton({
-    content: () => __DEV__ ? 'Turn off DevMode (reloads page)' : 'Turn on DevMode (reloads page)',
+    content: () => __DEV__() ? 'Turn off DevMode (reloads page)' : 'Turn on DevMode (reloads page)',
     onclick: () => {
-        localStorage.setItem('__DEV__', !__DEV__ ? 'on' : 'off');
+        localStorage.setItem('__DEV__', !__DEV__() ? 'on' : 'off');
         location.reload();
     }
 });
@@ -68,7 +70,8 @@ new DebugButton({
 new DebugButton({
     content: () => 'Clear save file',
     onclick: () => {
-        SaveManager.clear();
+        // SaveManager.clear();
         location.reload();
     }
 });
+

@@ -23,7 +23,7 @@ class SaveGame {
 
     private persist() {
         let data = JSON.stringify(this.props);
-        localStorage.setItem(`save_${this.id}`, __DEV__ ? data : btoa(data));
+        localStorage.setItem(`save_${this.id}`, __DEV__() ? data : btoa(data));
     }
 
     get(name: string) {

@@ -11,6 +11,9 @@ import { Camera } from "../components/camera";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
 import { DialogBox } from "../entities/dialog-box";
+const normal_hex = require("/img/hex_128x148.png")
+const forest_hex = require("/img/hex_128x148_forest.png")
+const town_center_img = require("/img/town_center.png")
 
 export class CityBuilderState extends State {
     dragStartPoint?: Point;
@@ -41,7 +44,7 @@ export class CityBuilderState extends State {
 
                 const sprite = hex.add(SpriteComponent)
                 sprite.setSize(128, 148);
-                sprite.setImage('../../img/hex_128x148.png');
+                sprite.setImage(normal_hex);
                 sprite.setActive(true);
 
                 hex.width = 128;
@@ -73,7 +76,7 @@ export class CityBuilderState extends State {
         for (let i = 0; i < 10; i++) {
             const unit = new Entity(this);
             const sprite = unit.add(SpriteComponent);
-            sprite.setImage('./img/hex_128x148_forest.png');
+            sprite.setImage(forest_hex);
             sprite.setSize(128, 148);
             sprite.runAnimation({
                 name: "deselect",
@@ -94,7 +97,7 @@ export class CityBuilderState extends State {
 
         const townCenter = new Entity(this);
         const sprite = townCenter.add(SpriteComponent);
-        sprite.setImage('./img/town_center.png');
+        sprite.setImage(town_center_img);
         sprite.setSize(128, 148);
         sprite.runAnimation({
             name: "base",
