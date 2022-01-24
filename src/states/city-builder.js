@@ -1,4 +1,4 @@
-define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/collector", "../components/inventory", "../components/resource", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box", "../entities/resource-display"], function (require, exports, juicy_1, camera_1, collector_1, inventory_1, resource_1, selectable_1, sprite_1, unit_1, dialog_box_1, resource_display_1) {
+define(["require", "exports", "../../lib/juicy", "../components/camera", "../components/collector", "../components/inventory", "../components/hex", "../components/resource", "../components/selectable", "../components/sprite", "../components/unit", "../entities/dialog-box", "../entities/resource-display"], function (require, exports, juicy_1, camera_1, collector_1, inventory_1, hex_1, resource_1, selectable_1, sprite_1, unit_1, dialog_box_1, resource_display_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     exports.CityBuilderState = void 0;
@@ -20,21 +20,28 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             // More on this system here: https://www.redblobgames.com/grids/hexagons/
             for (let x = -15; x < 15; x++) {
                 for (let y = -15; y < 15; y++) {
-                    const hex = new juicy_1.Entity(this);
-                    const sprite = hex.add(sprite_1.SpriteComponent);
+                    const hexEntity = new juicy_1.Entity(this);
+                    const sprite = hexEntity.add(sprite_1.SpriteComponent);
                     sprite.setSize(128, 148);
                     sprite.setImage('../../img/hex_128x148.png');
                     sprite.setActive(true);
-                    hex.width = 128;
-                    hex.height = 148;
-                    var xOffset = x * hex.width;
-                    const yOffset = y * hex.height * (3 / 4);
+                    hexEntity.width = hex_1.HexComponent.width;
+                    hexEntity.height = hex_1.HexComponent.height;
+                    var xOffset = x * hexEntity.width;
+                    const yOffset = y * hexEntity.height * (3 / 4);
                     if (y % 2 != 0) {
-                        xOffset = x * hex.width - (hex.width / 2);
+                        xOffset = x * hexEntity.width - (hexEntity.width / 2);
                     }
                     ;
-                    hex.position = new juicy_1.Point(xOffset, yOffset);
-                    this.hexes.push(hex);
+                    hexEntity.position = new juicy_1.Point(xOffset, yOffset);
+                    var hex = hexEntity.add(hex_1.HexComponent);
+                    if (y % 2 != 0) {
+                        hex.hex = new hex_1.Hex(x * 2, y);
+                    }
+                    else {
+                        hex.hex = new hex_1.Hex(x * 2 + 1, y);
+                    }
+                    this.hexes.push(hexEntity);
                 }
             }
             for (let i = 0; i < 10; i++) {
@@ -133,6 +140,10 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             });
         }
         mouseup_2(pos) {
+            const hexToCheck = hex_1.Hex.pointToHex(pos);
+            // console.log(pos);
+            // console.log(hexToCheck);
+            // console.log(hexToCheck.toPoint());
             const selected = this.units.filter(s => s.selected);
             const resource2 = this.resources.find(s => s.hovering);
             const resource = resource2 === null || resource2 === void 0 ? void 0 : resource2.entity.get(resource_1.ResourceNode);
