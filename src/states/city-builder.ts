@@ -8,9 +8,17 @@ import {
     TextComponent,
 } from "../../lib/juicy";
 import { Camera } from "../components/camera";
+import { Collector } from "../components/collector";
+import { Inventory } from "../components/inventory";
+import { NineSlice } from "../components/nine-slice";
+import { Hex, HexComponent } from "../components/hex";
+import { ResourceNode, ResourceType } from "../components/resource";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
+import { UnitComponent } from "../components/unit";
 import { DialogBox } from "../entities/dialog-box";
+import { ResourceDisplay } from "../entities/resource-display";
+
 const normal_hex = require("/img/hex_128x148.png")
 const forest_hex = require("/img/hex_128x148_forest.png")
 const town_center_img = require("/img/town_center.png")
@@ -27,7 +35,9 @@ export class CityBuilderState extends State {
     zoom = 1.5;
     camera: Entity;
 
+    inventory = new Inventory();
     dialogBox = new DialogBox(this);
+    resourceDisplay = new ResourceDisplay(this, this.inventory);
 
     constructor() {
         super();
@@ -40,25 +50,25 @@ export class CityBuilderState extends State {
         // More on this system here: https://www.redblobgames.com/grids/hexagons/
         for (let x = -15; x < 15; x++) {
             for (let y = -15; y < 15; y++) {
-                const hex = new Entity(this);
+                const hexEntity = new Entity(this);
 
-                const sprite = hex.add(SpriteComponent)
+                const sprite = hexEntity.add(SpriteComponent)
                 sprite.setSize(128, 148);
                 sprite.setImage(normal_hex);
                 sprite.setActive(true);
 
-                hex.width = 128;
-                hex.height = 148;
+                hexEntity.width = HexComponent.width;
+                hexEntity.height = HexComponent.height;
 
-                var xOffset = x * hex.width;
-                const yOffset = y * hex.height * (3 / 4);
+                var xOffset = x * hexEntity.width;
+                const yOffset = y * hexEntity.height * (3 / 4);
 
                 if (y % 2 != 0) {
-                    xOffset = x * hex.width - (hex.width / 2);
+                    xOffset = x * hexEntity.width - (hexEntity.width / 2);
                 };
 
-                hex.position = new Point(xOffset, yOffset);
-                this.hexes.push(hex);
+                hexEntity.position = new Point(xOffset, yOffset);
+                this.hexes.push(hexEntity);
             }
         }
 
@@ -70,6 +80,7 @@ export class CityBuilderState extends State {
             unit.width = 50;
             unit.height = 50;
             unit.position = this.game.size.copy().mult(Math.random() - 0.5, Math.random() - 0.5).mult(1 / 3);
+            unit.add(UnitComponent);
             this.units.push(unit.add(Selectable));
         }
 
@@ -93,6 +104,7 @@ export class CityBuilderState extends State {
                 unit.position.x += 128 / 2;
             };
             this.resources.push(unit.add(Selectable));
+            unit.add(ResourceNode);
         }
 
         const townCenter = new Entity(this);
@@ -105,17 +117,30 @@ export class CityBuilderState extends State {
             frameTime: 0,
             repeat: true
         });
+        townCenter.add(Collector).inventory = this.inventory;
         townCenter.add(Selectable);
 
         this.camera = new Entity(this);
         this.camera.add(Camera).target = townCenter;
 
+        // Reverse-compute Hex coordinate from worldPosition
+        this.hexes.forEach(h => {
+            const hexFromWorld = Hex.pointToHex(this.toWorldPos(h.position));
+            var hex = h.add(HexComponent);
+            hex.hex = hexFromWorld;
+        });
+
         this.dialogBox.width = 800;
         this.dialogBox.height = this.game.size.y;
-        this.dialogBox.position.x = this.game.size.x - this.dialogBox.width;
-        this.dialogBox.position.y = 0;
-        this.dialogBox.setInfo('Test title');
+        this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
+        this.dialogBox.position.y = this.game.size.y / 2;
         this.remove(this.dialogBox);
+
+        this.resourceDisplay.width = this.game.size.x - this.dialogBox.width;
+        this.resourceDisplay.height = 128;
+        this.resourceDisplay.position.x = this.resourceDisplay.width / 2;
+        this.resourceDisplay.position.y = this.resourceDisplay.height / 2;
+        this.remove(this.resourceDisplay);
     }
 
     toWorldPos(pos: Point) {
@@ -136,44 +161,58 @@ export class CityBuilderState extends State {
     }
 
     click_0(_: Point, { shiftKey }: MouseEvent) {
-        this.units.forEach(selectable => {
+        // Use find to early out if something returns true;
+        let somethingSelected = false;
+        this.entities.forEach(entity => {
+            const selectable = entity.get(Selectable);
+            if (!selectable) {
+                return;
+            }
+
             if (selectable.hovering) {
                 if (shiftKey && selectable.selected) {
                     selectable.deselect();
                 }
-                else {
+                else if (!somethingSelected) {
                     selectable.select();
+                    somethingSelected = true;
                 }
             }
             else if (!shiftKey) {
                 selectable.deselect();
             }
         });
-
-        const selected = this.entities.filter(entity => {
-            const selectable = entity.get(Selectable);
-            return selectable && (selectable.selected);
-        });
-
-        this.dialogBox.setInfo(`${selected.length} selected`);
     }
 
-    mouseup_2() {
+    mouseup_2(pos: Point) {
+        const hexToCheck = this.hexes.filter(h => {
+            h.get(HexComponent)?.hex === Hex.pointToHex(this.toWorldPos(pos));
+        });
         const selected = this.units.filter(s => s.selected);
-        const resource = this.resources.find(s => s.hovering);
-        if (resource) {
-            console.log(`Moving ${selected.length} units to a resource`);
-        }
-        else {
-            console.log(`Moving ${selected.length} units`);
-        }
+        const resource2 = this.resources.find(s => s.hovering);
+        const resource = resource2?.entity.get(ResourceNode);
+
+        let dest = resource ? resource.entity.position.copy() : this.toWorldPos(pos);
+        selected.forEach(selected => {
+            const unit = selected.entity.get(UnitComponent);
+            if (!unit) {
+                return;
+            }
+
+            if (resource) {
+                unit.setGoal({ type: 'Harvest', resource });
+            }
+            else {
+                unit.setGoal({ type: 'Move', dest });
+            }
+        });
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
         this.dragStartPoint = this.toWorldPos(pos);
 
         if (!shiftKey) {
-            this.units.forEach(selectable => selectable.deselect());
+            this.entities.forEach(e => e.get(Selectable)?.deselect());
         }
     }
 
@@ -189,10 +228,10 @@ export class CityBuilderState extends State {
 
             this.units.forEach(selectable => {
                 const unit = selectable.entity;
-                const hovering = unit.position.x >= minX &&
-                    unit.position.y >= minY &&
-                    unit.position.x + unit.width <= maxX &&
-                    unit.position.y + unit.height <= maxY;
+                const hovering = unit.position.x - unit.width / 2 >= minX &&
+                    unit.position.y - unit.height / 2 >= minY &&
+                    unit.position.x + unit.width / 2 <= maxX &&
+                    unit.position.y + unit.height / 2 <= maxY;
                 if (hovering) {
                     selectable.select();
                 }
@@ -204,6 +243,7 @@ export class CityBuilderState extends State {
     update(dt: number) {
         super.update(dt);
 
+        const shiftKey = this.game.keyDown('Shift');
         const worldMouse = this.toWorldPos(this.game.mouse);
         this.entities.forEach(entity => {
             const selectable = entity.get(Selectable);
@@ -223,12 +263,20 @@ export class CityBuilderState extends State {
 
             this.units.forEach(selectable => {
                 const unit = selectable.entity;
-                selectable.hovering = unit.position.x >= minX &&
-                    unit.position.y >= minY &&
-                    unit.position.x + unit.width <= maxX &&
-                    unit.position.y + unit.height <= maxY;
+                selectable.hovering = unit.position.x - unit.width / 2 >= minX &&
+                    unit.position.y - unit.height / 2 >= minY &&
+                    unit.position.x + unit.width / 2 <= maxX &&
+                    unit.position.y + unit.height / 2 <= maxY;
             });
         }
+
+        const selected = this.entities.filter(entity => {
+            const selectable = entity.get(Selectable);
+            return selectable && (selectable.selected);
+        });
+        this.dialogBox.setSelected(selected);
+        this.dialogBox.update(dt);
+        this.resourceDisplay.update(dt);
     }
 
     keypress(key: any) {
@@ -261,5 +309,6 @@ export class CityBuilderState extends State {
         context.restore();
 
         this.dialogBox.render(context);
+        this.resourceDisplay.render(context);
     }
 };

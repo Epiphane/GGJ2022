@@ -18,7 +18,7 @@ export * from './juicy.point';
 
 const PIXEL_RATIO = window.devicePixelRatio;
 
-function SetCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
+export function SetCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
     canvas.width = width;
     canvas.height = height;
     // canvas.getContext('2d')?.scale(PIXEL_RATIO, PIXEL_RATIO);
@@ -109,7 +109,7 @@ class Game {
         };
 
         document.onkeyup = (evt) => {
-            this.keyState[evt.key] = true;
+            this.keyState[evt.key] = false;
             this.trigger('keypress', evt);
             this.trigger(`key_${evt.key}`, evt);
         };
@@ -532,10 +532,10 @@ export class Entity {
 
     contains(point: Point) {
         point = point.copy().sub(this.globalPosition());
-        return point.x >= 0 &&
-            point.y >= 0 &&
-            point.x <= this.width &&
-            point.y <= this.height;
+        return point.x >= -this.width / 2 &&
+            point.y >= -this.height / 2 &&
+            point.x <= this.width / 2 &&
+            point.y <= this.height / 2;
     }
 
     distance(other: Entity | Point) {
@@ -636,7 +636,7 @@ export class Entity {
 
     render(context: CanvasRenderingContext2D) {
         context.save();
-        context.translate(Math.floor(this.position.x), Math.floor(this.position.y));
+        context.translate(Math.floor(this.position.x - this.width / 2), Math.floor(this.position.y - this.height / 2));
         context.scale(this.scale.x, this.scale.y);
 
         let renderArgs: RenderArgs;
@@ -894,6 +894,10 @@ export class TextComponent extends Component {
     }
 
     render(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+        if (!this.text) {
+            return;
+        }
+
         // Save original alpha
         const originalAlpha = context.globalAlpha;
         context.globalAlpha = this.opacity;
