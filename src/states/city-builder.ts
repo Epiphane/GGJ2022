@@ -11,6 +11,7 @@ import { Camera } from "../components/camera";
 import { Collector } from "../components/collector";
 import { Inventory } from "../components/inventory";
 import { NineSlice } from "../components/nine-slice";
+import { Hex, HexComponent } from "../components/hex";
 import { ResourceNode, ResourceType } from "../components/resource";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
@@ -45,25 +46,33 @@ export class CityBuilderState extends State {
         // More on this system here: https://www.redblobgames.com/grids/hexagons/
         for (let x = -15; x < 15; x++) {
             for (let y = -15; y < 15; y++) {
-                const hex = new Entity(this);
+                const hexEntity = new Entity(this);
 
-                const sprite = hex.add(SpriteComponent)
+                const sprite = hexEntity.add(SpriteComponent)
                 sprite.setSize(128, 148);
                 sprite.setImage('../../img/hex_128x148.png');
                 sprite.setActive(true);
 
-                hex.width = 128;
-                hex.height = 148;
+                hexEntity.width = HexComponent.width;
+                hexEntity.height = HexComponent.height;
 
-                var xOffset = x * hex.width;
-                const yOffset = y * hex.height * (3 / 4);
+                var xOffset = x * hexEntity.width;
+                const yOffset = y * hexEntity.height * (3 / 4);
 
                 if (y % 2 != 0) {
-                    xOffset = x * hex.width - (hex.width / 2);
+                    xOffset = x * hexEntity.width - (hexEntity.width / 2);
                 };
 
-                hex.position = new Point(xOffset, yOffset);
-                this.hexes.push(hex);
+                hexEntity.position = new Point(xOffset, yOffset);
+
+                var hex = hexEntity.add(HexComponent);
+                if (y % 2 != 0) {
+                    hex.hex = new Hex(x * 2, y);
+                } else {
+                    hex.hex = new Hex(x * 2 + 1, y);
+                }
+
+                this.hexes.push(hexEntity);
             }
         }
 
@@ -173,6 +182,11 @@ export class CityBuilderState extends State {
     }
 
     mouseup_2(pos: Point) {
+        const hexToCheck = Hex.pointToHex(pos);
+        // console.log(pos);
+        // console.log(hexToCheck);
+        // console.log(hexToCheck.toPoint());
+
         const selected = this.units.filter(s => s.selected);
         const resource2 = this.resources.find(s => s.hovering);
         const resource = resource2?.entity.get(ResourceNode);
