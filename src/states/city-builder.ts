@@ -8,6 +8,8 @@ import {
     TextComponent,
 } from "../../lib/juicy";
 import { Camera } from "../components/camera";
+import { NineSlice } from "../components/nine-slice";
+import { ResourceNode, ResourceType } from "../components/resource";
 import { Selectable } from "../components/selectable";
 import { SpriteComponent } from "../components/sprite";
 import { UnitComponent } from "../components/unit";
@@ -26,6 +28,7 @@ export class CityBuilderState extends State {
     camera: Entity;
 
     dialogBox = new DialogBox(this);
+    resourceDisplay = new Entity(this, [NineSlice]);
 
     constructor() {
         super();
@@ -92,6 +95,7 @@ export class CityBuilderState extends State {
                 unit.position.x += 128 / 2;
             };
             this.resources.push(unit.add(Selectable));
+            unit.add(ResourceNode);
         }
 
         const townCenter = new Entity(this);
@@ -113,8 +117,20 @@ export class CityBuilderState extends State {
         this.dialogBox.height = this.game.size.y;
         this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
         this.dialogBox.position.y = this.game.size.y / 2;
-        this.dialogBox.setInfo('Test title');
         this.remove(this.dialogBox);
+
+        this.resourceDisplay.width = this.game.size.x - this.dialogBox.width;
+        this.resourceDisplay.height = 128;
+        this.resourceDisplay.position.x = this.resourceDisplay.width / 2;
+        this.resourceDisplay.position.y = this.resourceDisplay.height / 2;
+        this.resourceDisplay.get(NineSlice)?.set({
+            src: './img/dialog_box.png',
+            left: 64,
+            right: 64,
+            top: 64,
+            bottom: 64,
+        });
+        this.remove(this.resourceDisplay);
     }
 
     toWorldPos(pos: Point) {
@@ -135,13 +151,21 @@ export class CityBuilderState extends State {
     }
 
     click_0(_: Point, { shiftKey }: MouseEvent) {
-        this.units.forEach(selectable => {
+        // Use find to early out if something returns true;
+        let somethingSelected = false;
+        this.entities.forEach(entity => {
+            const selectable = entity.get(Selectable);
+            if (!selectable) {
+                return;
+            }
+
             if (selectable.hovering) {
                 if (shiftKey && selectable.selected) {
                     selectable.deselect();
                 }
-                else {
+                else if (!somethingSelected) {
                     selectable.select();
+                    somethingSelected = true;
                 }
             }
             else if (!shiftKey) {
@@ -152,24 +176,30 @@ export class CityBuilderState extends State {
 
     mouseup_2(pos: Point) {
         const selected = this.units.filter(s => s.selected);
-        const resource = this.resources.find(s => s.hovering);
+        const resource2 = this.resources.find(s => s.hovering);
+        const resource = resource2?.entity.get(ResourceNode);
 
         let dest = resource ? resource.entity.position.copy() : this.toWorldPos(pos);
-        if (resource) {
-            console.log(`Moving ${selected.length} units to a resource`);
-        }
-        else {
-            console.log(`Moving ${selected.length} units`);
-        }
+        selected.forEach(selected => {
+            const unit = selected.entity.get(UnitComponent);
+            if (!unit) {
+                return;
+            }
 
-        selected.forEach(selected => selected.entity.get(UnitComponent)?.moveTo(dest));
+            unit.cancelTasks();
+            unit.queueTask({ type: 'Move', dest });
+
+            if (resource) {
+                unit.queueTask({ type: 'Harvest', resource });
+            }
+        });
     }
 
     dragstart_0(pos: Point, { shiftKey }: MouseEvent) {
         this.dragStartPoint = this.toWorldPos(pos);
 
         if (!shiftKey) {
-            this.units.forEach(selectable => selectable.deselect());
+            this.entities.forEach(e => e.get(Selectable)?.deselect());
         }
     }
 
@@ -200,8 +230,7 @@ export class CityBuilderState extends State {
     update(dt: number) {
         super.update(dt);
 
-        this.dialogBox.update(dt);
-
+        const shiftKey = this.game.keyDown('Shift');
         const worldMouse = this.toWorldPos(this.game.mouse);
         this.entities.forEach(entity => {
             const selectable = entity.get(Selectable);
@@ -232,7 +261,9 @@ export class CityBuilderState extends State {
             const selectable = entity.get(Selectable);
             return selectable && (selectable.selected);
         });
-        this.dialogBox.setInfo(`${selected.length} selected`);
+        this.dialogBox.setSelected(selected);
+        this.dialogBox.update(dt);
+        this.resourceDisplay.update(dt);
     }
 
     keypress(key: any) {
@@ -265,5 +296,6 @@ export class CityBuilderState extends State {
         context.restore();
 
         this.dialogBox.render(context);
+        this.resourceDisplay.render(context);
     }
 };
