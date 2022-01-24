@@ -34,13 +34,6 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
                     }
                     ;
                     hexEntity.position = new juicy_1.Point(xOffset, yOffset);
-                    var hex = hexEntity.add(hex_1.HexComponent);
-                    if (y % 2 != 0) {
-                        hex.hex = new hex_1.Hex(x * 2, y);
-                    }
-                    else {
-                        hex.hex = new hex_1.Hex(x * 2 + 1, y);
-                    }
                     this.hexes.push(hexEntity);
                 }
             }
@@ -91,6 +84,12 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             townCenter.add(selectable_1.Selectable);
             this.camera = new juicy_1.Entity(this);
             this.camera.add(camera_1.Camera).target = townCenter;
+            // Reverse-compute Hex coordinate from worldPosition
+            this.hexes.forEach(h => {
+                const hexFromWorld = hex_1.Hex.pointToHex(this.toWorldPos(h.position));
+                var hex = h.add(hex_1.HexComponent);
+                hex.hex = hexFromWorld;
+            });
             this.dialogBox.width = 800;
             this.dialogBox.height = this.game.size.y;
             this.dialogBox.position.x = this.game.size.x - this.dialogBox.width / 2;
@@ -140,10 +139,10 @@ define(["require", "exports", "../../lib/juicy", "../components/camera", "../com
             });
         }
         mouseup_2(pos) {
-            const hexToCheck = hex_1.Hex.pointToHex(pos);
-            // console.log(pos);
-            // console.log(hexToCheck);
-            // console.log(hexToCheck.toPoint());
+            const hexToCheck = this.hexes.filter(h => {
+                var _a;
+                ((_a = h.get(hex_1.HexComponent)) === null || _a === void 0 ? void 0 : _a.hex) === hex_1.Hex.pointToHex(this.toWorldPos(pos));
+            });
             const selected = this.units.filter(s => s.selected);
             const resource2 = this.resources.find(s => s.hovering);
             const resource = resource2 === null || resource2 === void 0 ? void 0 : resource2.entity.get(resource_1.ResourceNode);
