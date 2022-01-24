@@ -18,7 +18,7 @@ export * from './juicy.point';
 
 const PIXEL_RATIO = window.devicePixelRatio;
 
-function SetCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
+export function SetCanvasSize(canvas: HTMLCanvasElement, width: number, height: number) {
     canvas.width = width;
     canvas.height = height;
     // canvas.getContext('2d')?.scale(PIXEL_RATIO, PIXEL_RATIO);
@@ -109,7 +109,7 @@ class Game {
         };
 
         document.onkeyup = (evt) => {
-            this.keyState[evt.key] = true;
+            this.keyState[evt.key] = false;
             this.trigger('keypress', evt);
             this.trigger(`key_${evt.key}`, evt);
         };
@@ -894,6 +894,10 @@ export class TextComponent extends Component {
     }
 
     render(context: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+        if (!this.text) {
+            return;
+        }
+
         // Save original alpha
         const originalAlpha = context.globalAlpha;
         context.globalAlpha = this.opacity;
