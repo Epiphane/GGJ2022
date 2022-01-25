@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "parcel serve index.html",
-    "build": "parcel build index.html --no-optimize --no-scope-hoist --no-content-hash"
+    "build": "parcel build index.html --no-optimize --no-scope-hoist --no-content-hash --public-url https://epiphane.github.io/GGJ2022/"
   },
   "repository": {
     "type": "git",
