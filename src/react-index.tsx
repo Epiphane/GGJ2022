@@ -50,11 +50,10 @@ export function App() {
     Game.resize();
   }, [size, loaded])
 
-  return <>
-    <h1>Hullo world!</h1>
+  return <div style={{position: "relative"}}>
     <canvas id="game-canvas" ref={canvasRef} />
-    {/*<TooltipOverlay />*/}
-  </>
+    <TooltipOverlay />
+  </div>
 }
 
 ReactDOM.render(<App />, document.getElementById("root"))

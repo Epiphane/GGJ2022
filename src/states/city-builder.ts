@@ -155,6 +155,17 @@ export class CityBuilderState extends State {
         return result;
     }
 
+    fromWorldPos(pos: Point) {
+        const result = pos.copy();
+
+        result.sub(this.camera.position);
+        result.mult(this.zoom);
+        result.sub(this.game.size.copy().mult(-0.5));
+
+        result.x -= this.dialogBox.width / 2;
+        return result;
+    }
+
     mousewheel({ deltaY }: WheelEvent) {
         this.zoom -= deltaY / 500;
         this.zoom = Math.min(Math.max(this.zoom, 1), 2.5);

@@ -5,6 +5,8 @@ import { ResourceNode, ResourceType } from "../components/resource";
 import { UnitComponent } from "../components/unit";
 import { WrapTextComponent } from "../components/wrap-text";
 
+const dialogBoxBg = require("/img/dialog_box.png")
+
 export class ResourceDisplay extends Entity {
     wood: TextComponent;
     inventory: Inventory;
@@ -15,7 +17,7 @@ export class ResourceDisplay extends Entity {
         this.inventory = inventory;
 
         this.add(NineSlice).set({
-            src: './img/dialog_box.png',
+            src: dialogBoxBg,
             left: 32,
             right: 32,
             top: 32,
