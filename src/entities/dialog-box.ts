@@ -5,7 +5,7 @@ import { ResourceNode } from "../components/resource";
 import { UnitComponent } from "../components/unit";
 import { WrapTextComponent } from "../components/wrap-text";
 
-const dialogBoxImg = require("/img/dialog_box.png")
+const dialogBoxImg = require("../../img/dialog_box.png")
 
 export class DialogBox extends Entity {
     title: TextComponent;
