@@ -19,7 +19,8 @@ const TooltipOverlay: FC<TooltipOverlayProps> = () => {
     }
 
 
-    const tooltipTime = currState.units.filter(u => true).map(unit => {
+    const tooltipTime = currState.units.filter(u => false).map(unit => {
+      // horrible jank code because I couldn't figure out how to properly go from world space -> screen space
       let point = unit.entity.globalPosition();
       point = point.multScalar(currState.zoom * 0.3);
       point = point.add(220, 150);

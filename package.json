@@ -6,8 +6,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "fun": "parcel serve",
-    "dev": "concurrently \"tsc -w\" \"nodemon index.js\"",
+    "dev": "parcel serve index.html",
+    "parcel-build": "parcel build index.html",
     "build": "tsc && cp -r audio dist && cp -r css dist && cp index.html dist && cp require.js dist && cp -r img dist && cp favicon.ico dist"
   },
   "repository": {
