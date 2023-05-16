@@ -1,10 +1,8 @@
 ---
 id: 8zc4p
-name: React
-file_version: 1.0.2
-app_version: 0.7.2-0
-file_blobs:
-  package.json: 6d01f288be6ad95cc5550fa789a3b47cc75fae3c
+title: React
+file_version: 1.1.2
+app_version: 1.8.5
 ---
 
 _aka Why did Elliot just add 100MB to node\_modules_ 🤬
@@ -17,12 +15,11 @@ I'm going to go through each of the new npm packages added to `package.json`:
 
 <br/>
 
+
 <!-- NOTE-swimm-snippet: the lines below link your snippet to Swimm -->
 ### 📄 package.json
 ```json
-⬜ 34         "@types/three": "^0.103.2",
-🟩 35         "react": "^17.0.2"
-⬜ 36       }
+48         "react": "^17.0.2",
 ```
 
 <br/>
@@ -30,15 +27,12 @@ I'm going to go through each of the new npm packages added to `package.json`:
 `react` has 1 job:
 
 *   Given an old state,
-    
+
 *   and a new state that you're about to go to,
-    
+
 *   what are the minimum "transformations" I need to get to the new state?
-    
 
 _NOTE that we are not talking about HTML or CSS or anything at this point,_ `react` _doesn't know what HTML is._
-
-<br/>
 
 As an example, imagine we're building a UI to show a file directory.
 
@@ -156,15 +150,11 @@ YOU OPEN COOL.HTML IN YOUR NETSCAPE BROWSER. IT LOOKS LIKE
 
 > **HENLO WORLD!**
 
-<br/>
-
 YOU USE VIM TO CHANGE COOL.HTML TO SAY
 
 ```
 <DIV>HELLLLLLLLO WORLD!</DIV>
 ```
-
-<br/>
 
 WITHOUT REFRESHING YOUR BROWSER, IT MAGICALLY NOW SAYS
 
@@ -212,15 +202,11 @@ That's more like it! That'll compile in Chrome if you asked it to.
 
 I lied. React doesn't just kill you. It kills your whole family.
 
-<br/>
-
 # Juicy -> React
 
 Whatever the Juicy State is we will turn it into React state.
 
 Don't ask me how. It's black magic.
-
-<br/>
 
 # CSS
 
